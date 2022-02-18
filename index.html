@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>videojs-antmedia-webrtc Demo</title>
+  <link href="node_modules/video.js/dist/video-js.css" rel="stylesheet">
+  <link href="dist/videojs-antmedia-webrtc.css" rel="stylesheet">
+  <style>
+    .demo-wrapper {
+      margin: auto;
+      width: 1000px;
+      padding: 30px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: #D3DEDC;
+      border: 1px solid #92A9BD;
+      border-radius: 16px;
+    }
+    .player-controls {
+      width: 640px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    .form-input {
+      width: 640px;
+      height: 24px;
+      margin-bottom: 10px;
+    }
+    .button {
+      width: 300px;
+      height: 30px;
+    }
+    .video-js {
+      width: 640px;
+      height: 320px;
+    }
+    .form-label {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+<div class="demo-wrapper">
+  <video id="videojs-antmedia-webrtc-player" class="video-js vjs-default-skin" controls></video>
+  <form class="player-controls" id="stream-form">
+    <label for="streamUrl" class="form-label">WS stream link</label>
+    <input class="form-input"
+           type="text"
+           id="streamUrl"
+           placeholder="ws://[ant-address]/[app]/websocket?streamId=[streamId]"
+    >
+    <label for="iceServers" class="form-label">ICE-servers Array (JSON format)</label>
+    <input class="form-input"
+           type="text"
+           id="iceServers"
+           placeholder="Type iceServers Array" value='[ { "urls": "stun:stun1.l.google.com:19302" } ]'
+    >
+    <button class="button" type="submit">Load</button>
+  </form>
+</div>
+
+  <script src="node_modules/video.js/dist/video.js"></script>
+  <script src="dist/videojs-antmedia-webrtc.js"></script>
+  <script>
+    (function(window, videojs) {
+      const streamForm = document.getElementById('stream-form')
+
+      streamForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const examplePlayer = window.examplePlayer = videojs('videojs-antmedia-webrtc-player');
+        const streamUrl = document.getElementById('streamUrl').value;
+        const iceServers = document.getElementById('iceServers').value;
+        if (window.antmediaWebrtc) {
+          window.antmediaWebrtc.webRTCAdaptor.stop(window.antmediaWebrtc.options.streamName)
+          return window.antmediaWebrtc.initiateWebRTCAdaptor({
+            streamUrl,
+            iceServers,
+          });
+        }
+        window.antmediaWebrtc = examplePlayer.antmediaWebrtc({
+          streamUrl,
+          iceServers,
+        })
+        examplePlayer.play();
+      });
+    }(window, window.videojs));
+  </script>
+</body>
+</html>
