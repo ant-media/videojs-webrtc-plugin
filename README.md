@@ -47,10 +47,10 @@ parameters:
 - subscriberCode (optional) - generated TOTP password. Required if the stream is protected by a TOTP password
 
 #### **iceServers** 
-Array of Ice-servers (STUN, TURN) in JSON format to establish a WebRTC connection
+Array of Ice-servers (STUN, TURN) in JSON string format to establish a WebRTC connection
 example:
 ```js
-[ { "urls": "stun:stun1.l.google.com:19302" } ]
+"[ { "urls": "stun:stun1.l.google.com:19302" } ]"
 ```
 ### `<script>` Tag
 
@@ -64,7 +64,7 @@ This is the simplest case. Get the script in whatever way you prefer and include
 
   player.antmediaWebrtc({
     streamUrl: "ws://[ant-address]/[app]/websocket?streamId=[streamId]",
-    iceServers: [ { "urls": "stun:stun1.l.google.com:19302" } ],
+    iceServers: "[ { "urls": "stun:stun1.l.google.com:19302" } ]",
   });
 </script>
 ```
@@ -85,7 +85,7 @@ var player = videojs('my-video');
 
 player.antmediaWebrtc({
   streamUrl: "ws://[ant-address]/[app]/websocket?streamId=[streamId]",
-  iceServers: [ { "urls": "stun:stun1.l.google.com:19302" } ],
+  iceServers: "[ { "urls": "stun:stun1.l.google.com:19302" } ]",
 });
 ```
 
@@ -99,7 +99,7 @@ require(['video.js', 'videojs-antmedia-webrtc'], function(videojs) {
 
   player.antmediaWebrtc({
     streamUrl: "ws://[ant-address]/[app]/websocket?streamId=[streamId]",
-    iceServers: [ { "urls": "stun:stun1.l.google.com:19302" } ],
+    iceServers: "[ { "urls": "stun:stun1.l.google.com:19302" } ]",
   });
 });
 ```
