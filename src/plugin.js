@@ -34,7 +34,7 @@ class AntmediaWebrtc extends Plugin {
     super(player);
     this.initiateWebRTCAdaptor(options);
     this.player.ready(() => {
-      this.player.addClass('vjs-antmedia-webrtc');
+      this.player.addClass('videojs-webrtc-plugin');
     });
     this.player.on('playing', () => {
       if (this.player.el().getElementsByClassName('vjs-custom-spinner').length) {
