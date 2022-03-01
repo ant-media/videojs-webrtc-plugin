@@ -39,7 +39,7 @@ ws://[ant-address]/[app]/[streamId].webrtc?token=[token(opt)]&subscriberId=[subs
 ```
 link example:
 ```js
-ws://12.23.322.157:5080/LiveApp/stream1.webrtc
+wss://192.168.0.1:5443/LiveApp/stream1.webrtc
 ```
 parameters:
 - token (optional) - a one-time token generated for the stream (in case the stream is protected by the one-time token protection mechanism
@@ -126,7 +126,7 @@ To catch an error, you need to subscribe to the event "ant-error":
 ```
 ## License
 
-MIT. Copyright (c) ForaSoft
+MIT. Copyright (c) AntMedia
 
 
 [videojs]: http://videojs.com/
