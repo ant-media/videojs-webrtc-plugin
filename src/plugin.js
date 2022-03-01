@@ -54,8 +54,14 @@ class AntmediaWebrtc extends Plugin {
   initiateWebRTCAdaptor(options) {
     this.options = videojs.mergeOptions(defaults, options);
     this.options.pcConfig = { iceServers: JSON.parse(options.iceServers) };
+
     this.options.mediaServerUrl = `${options.streamUrl.split('/').slice(0, 4).join('/')}/websocket`;
     this.options.streamName = options.streamUrl.split('/')[4].split('.webrtc')[0];
+
+    if (this.options.streamName.includes('/')) {
+      this.player.trigger('ant-error', {info: 'invalid_streamId'});
+    }
+
     this.options.token = this.getUrlParameter('token');
     this.options.subscriberId = this.getUrlParameter('subscriberId');
     this.options.subscriberCode = this.getUrlParameter('subscriberCode');
@@ -67,6 +73,7 @@ class AntmediaWebrtc extends Plugin {
       sdpConstraints: this.options.sdpConstraints,
       player: this.player,
       callback: (info, obj) => {
+        this.player.trigger('ant-callback', {info, data: obj});
         switch (info) {
         case ANT_CALLBACKS.INITIALIZED: {
           this.initializedHandler();
@@ -111,7 +118,7 @@ class AntmediaWebrtc extends Plugin {
         this.player.addChild(this.errorModal);
         this.errorModal.open();
         this.errorModal.setTimeout(() => this.errorModal.close(), 3000);
-        this.player.trigger('ant-error', { error });
+        this.player.trigger('ant-error', {info: error });
       }
     });
   }
