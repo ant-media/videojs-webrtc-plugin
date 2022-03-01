@@ -11,12 +11,12 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 - [Installation](#installation)
 - [Usage](#usage)
   - [Options Object](#options-object)
-    - [streamUrl](#streamurl)
-    - [iceServers](#iceservers)
+    - [**streamUrl**](#streamurl)
+    - [**iceServers**](#iceservers)
   - [`<script>` Tag](#script-tag)
   - [Browserify/CommonJS](#browserifycommonjs)
   - [RequireJS/AMD](#requirejsamd)
-  - [Handling error-callbacks](#errors)
+  - [Handling error-callbacks](#handling-error-callbacks)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -39,7 +39,7 @@ ws://[ant-address]/[app]/[streamId].webrtc?token=[token(opt)]&subscriberId=[subs
 ```
 link example:
 ```js
-wss://12.23.322.157:5080/LiveApp/stream1.webrtc
+ws://12.23.322.157:5080/LiveApp/stream1.webrtc
 ```
 parameters:
 - token (optional) - a one-time token generated for the stream (in case the stream is protected by the one-time token protection mechanism
