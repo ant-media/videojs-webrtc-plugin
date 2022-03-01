@@ -1,10 +1,10 @@
 {
-  "name": "videojs-antmedia-webrtc",
-  "version": "0.0.0",
-  "description": "streaming via WebRTC with Ant-mediaserver",
-  "main": "dist/videojs-antmedia-webrtc.cjs.js",
-  "module": "dist/videojs-antmedia-webrtc.es.js",
-  "browser": "dist/videojs-antmedia-webrtc.js",
+  "name": "videojs-webrtc-plugin",
+  "version": "1.0.0",
+  "description": "streaming via WebRTC with Ant-MediaServer",
+  "main": "dist/videojs-webrtc-plugin.cjs.js",
+  "module": "dist/videojs-webrtc-plugin.es.js",
+  "browser": "dist/videojs-webrtc-plugin.js",
   "generator-videojs-plugin": {
     "version": "8.0.0"
   },
@@ -12,7 +12,7 @@
     "build": "npm-run-all -s clean -p build:*",
     "build-prod": "cross-env-shell NO_TEST_BUNDLE=1 'npm run build'",
     "build-test": "cross-env-shell TEST_BUNDLE_ONLY=1 'npm run build'",
-    "build:css": "postcss -o dist/videojs-antmedia-webrtc.css --config scripts/postcss.config.js src/plugin.scss",
+    "build:css": "postcss -o dist/videojs-webrtc-plugin.css --config scripts/postcss.config.js src/plugin.scss",
     "build:js": "rollup -c scripts/rollup.config.js",
     "clean": "shx rm -rf ./dist ./test/dist ./cjs ./es && shx mkdir -p ./dist ./test/dist ./cjs ./es",
     "docs": "npm-run-all docs:*",
@@ -31,6 +31,14 @@
     "watch:js": "npm run build:js -- -w",
     "prepublishOnly": "npm-run-all build-prod && vjsverify --verbose"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ant-media/videojs-webrtc-plugin"
+  },
+  "bugs": {
+    "url": "https://github.com/ant-media/videojs-webrtc-plugin/issues"
+  },
+  "homepage": "https://github.com/ant-media/videojs-webrtc-plugin#readme",
   "engines": {
     "node": ">=14",
     "npm": ">=6"

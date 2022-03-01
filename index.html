@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>videojs-antmedia-webrtc Demo</title>
+  <title>videojs-webrtc-plugin Demo</title>
   <link href="node_modules/video.js/dist/video-js.css" rel="stylesheet">
-  <link href="dist/videojs-antmedia-webrtc.css" rel="stylesheet">
+  <link href="dist/videojs-webrtc-plugin.css" rel="stylesheet">
   <style>
     .demo-wrapper {
       margin: auto;
@@ -46,13 +46,13 @@
 </head>
 <body>
 <div class="demo-wrapper">
-  <video id="videojs-antmedia-webrtc-player" class="video-js vjs-default-skin" controls></video>
+  <video id="videojs-webrtc-player" class="video-js vjs-default-skin" controls></video>
   <form class="player-controls" id="stream-form">
     <label for="streamUrl" class="form-label">WS stream link</label>
     <input class="form-input"
            type="text"
            id="streamUrl"
-           placeholder="ws://[ant-address]/[app]/websocket?streamId=[streamId]"
+           placeholder="ws://[ant-address]/[app]/[streamId].webrtc"
     >
     <label for="iceServers" class="form-label">ICE-servers Array (JSON format)</label>
     <input class="form-input"
@@ -65,14 +65,14 @@
 </div>
 
   <script src="node_modules/video.js/dist/video.js"></script>
-  <script src="dist/videojs-antmedia-webrtc.js"></script>
+  <script src="dist/videojs-webrtc-plugin.js"></script>
   <script>
     (function(window, videojs) {
       const streamForm = document.getElementById('stream-form')
 
       streamForm.addEventListener('submit', function(event) {
         event.preventDefault();
-        const examplePlayer = window.examplePlayer = videojs('videojs-antmedia-webrtc-player');
+        const examplePlayer = window.examplePlayer = videojs('videojs-webrtc-player');
         const streamUrl = document.getElementById('streamUrl').value;
         const iceServers = document.getElementById('iceServers').value;
         if (window.antmediaWebrtc) {
@@ -89,6 +89,7 @@
         examplePlayer.play();
       });
     }(window, window.videojs));
+
   </script>
 </body>
 </html>

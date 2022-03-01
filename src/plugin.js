@@ -34,7 +34,7 @@ class AntmediaWebrtc extends Plugin {
     super(player);
     this.initiateWebRTCAdaptor(options);
     this.player.ready(() => {
-      this.player.addClass('vjs-antmedia-webrtc');
+      this.player.addClass('videojs-webrtc-plugin');
     });
     this.player.on('playing', () => {
       if (this.player.el().getElementsByClassName('vjs-custom-spinner').length) {
@@ -54,8 +54,8 @@ class AntmediaWebrtc extends Plugin {
   initiateWebRTCAdaptor(options) {
     this.options = videojs.mergeOptions(defaults, options);
     this.options.pcConfig = { iceServers: JSON.parse(options.iceServers) };
-    this.options.mediaServerUrl = options.streamUrl.split('?')[0];
-    this.options.streamName = this.getUrlParameter('streamId');
+    this.options.mediaServerUrl = `${options.streamUrl.split('/').slice(0, 4).join('/')}/websocket`;
+    this.options.streamName = options.streamUrl.split('/')[4].split('.webrtc')[0];
     this.options.token = this.getUrlParameter('token');
     this.options.subscriberId = this.getUrlParameter('subscriberId');
     this.options.subscriberCode = this.getUrlParameter('subscriberCode');
@@ -111,6 +111,7 @@ class AntmediaWebrtc extends Plugin {
         this.player.addChild(this.errorModal);
         this.errorModal.open();
         this.errorModal.setTimeout(() => this.errorModal.close(), 3000);
+        this.player.trigger('ant-error', { error });
       }
     });
   }
@@ -211,17 +212,20 @@ class AntmediaWebrtc extends Plugin {
    * @param {string} param callback event info
    */
   getUrlParameter(param) {
-    const urlParams = this.options.streamUrl.split('?')[1].split('&').reduce(
-      (p, e) => {
-        const a = e.split('=');
+    if (this.options.streamUrl.includes('?')) {
+      const urlParams = this.options.streamUrl.split('?')[1].split('&').reduce(
+        (p, e) => {
+          const a = e.split('=');
 
-        p[ decodeURIComponent(a[0])] = decodeURIComponent(a[1]);
-        return p;
-      },
-      {}
-    );
+          p[decodeURIComponent(a[0])] = decodeURIComponent(a[1]);
+          return p;
+        },
+        {}
+      ) || {};
 
-    return urlParams[param];
+      return urlParams[param];
+    }
+    return null;
   }
 }
 
@@ -235,3 +239,4 @@ AntmediaWebrtc.VERSION = VERSION;
 videojs.registerPlugin('antmediaWebrtc', AntmediaWebrtc);
 
 export default AntmediaWebrtc;
+

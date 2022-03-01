@@ -15,7 +15,7 @@ QUnit.test('the environment is sane', function(assert) {
   assert.strictEqual(typeof plugin, 'function', 'plugin is a function');
 });
 
-QUnit.module('videojs-antmedia-webrtc', {
+QUnit.module('videojs-webrtc-plugin', {
 
   beforeEach() {
 
@@ -43,7 +43,7 @@ QUnit.test('registers itself with video.js', function(assert) {
   assert.strictEqual(
     typeof Player.prototype.antmediaWebrtc,
     'function',
-    'videojs-antmedia-webrtc plugin was registered'
+    'videojs-webrtc-plugin plugin was registered'
   );
 
   this.player.antmediaWebrtc({
@@ -55,7 +55,7 @@ QUnit.test('registers itself with video.js', function(assert) {
   this.clock.tick(1);
 
   assert.ok(
-    this.player.hasClass('vjs-antmedia-webrtc'),
+    this.player.hasClass('videojs-webrtc-plugin'),
     'the plugin adds a class to the player'
   );
 });

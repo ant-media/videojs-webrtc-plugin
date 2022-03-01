@@ -1,4 +1,4 @@
-# videojs-antmedia-webrtc
+# videojs-webrtc-plugin
 
 Plugin for viewing streams located on the ant-media server. There is also a function to change the resolution of the stream
 
@@ -11,37 +11,37 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 - [Installation](#installation)
 - [Usage](#usage)
   - [Options Object](#options-object)
-    - [**streamUrl**](#streamurl)
-    - [**iceServers**](#iceservers)
+    - [streamUrl](#streamurl)
+    - [iceServers](#iceservers)
   - [`<script>` Tag](#script-tag)
   - [Browserify/CommonJS](#browserifycommonjs)
   - [RequireJS/AMD](#requirejsamd)
+  - [Handling error-callbacks](#errors)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 ## Installation
 
 ```sh
-npm install --save videojs-antmedia-webrtc
+npm install --save videojs-webrtc-plugin
 ```
 
 ## Usage
 
-To include videojs-antmedia-webrtc on your website or web application, use any of the following methods.
+To include videojs-webrtc-plugin on your website or web application, use any of the following methods.
 
 ### Options Object
 
 #### **streamUrl** 
-Websocket Ant-MediaServer address format:
+Ant-MediaServer stream address format:
 ```js
-ws://[ant-address]/[app]/websocket?streamId=[streamId]&token=[token(opt)]&subscriberId=[subscriberId(opt)]&subscriberCode=[TOTP-code(opt)]
+ws://[ant-address]/[app]/[streamId].webrtc?token=[token(opt)]&subscriberId=[subscriberId(opt)]&subscriberCode=[TOTP-code(opt)]
 ```
 link example:
 ```js
-wss://12.23.322.157:5080/LiveApp/websocket?streamId=test
+wss://12.23.322.157:5080/LiveApp/stream1.webrtc
 ```
 parameters:
-- streamId - Id of the stream published on the media server
 - token (optional) - a one-time token generated for the stream (in case the stream is protected by the one-time token protection mechanism
 - subscriberId (optional) - subscriber Id. Required if the stream is protected by a TOTP password
 - subscriberCode (optional) - generated TOTP password. Required if the stream is protected by a TOTP password
@@ -50,7 +50,7 @@ parameters:
 Array of Ice-servers (STUN, TURN) in JSON string format to establish a WebRTC connection
 example:
 ```js
-"[ { "urls": "stun:stun1.l.google.com:19302" } ]"
+'[ { "urls": "stun:stun1.l.google.com:19302" } ]'
 ```
 ### `<script>` Tag
 
@@ -58,20 +58,20 @@ This is the simplest case. Get the script in whatever way you prefer and include
 
 ```html
 <script src="//path/to/video.min.js"></script>
-<script src="//path/to/videojs-antmedia-webrtc.min.js"></script>
+<script src="//path/to/videojs-webrtc-plugin.min.js"></script>
 <script>
   var player = videojs('my-video');
 
   player.antmediaWebrtc({
-    streamUrl: "ws://[ant-address]/[app]/websocket?streamId=[streamId]",
-    iceServers: "[ { "urls": "stun:stun1.l.google.com:19302" } ]",
+    streamUrl: "ws://[ant-address]/[app]/[streamId].webrtc",
+    iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]',
   });
 </script>
 ```
 
 ### Browserify/CommonJS
 
-When using with Browserify, install videojs-antmedia-webrtc via npm and `require` the plugin as you would any other module.
+When using with Browserify, install videojs-webrtc-plugin via npm and `require` the plugin as you would any other module.
 
 ```js
 var videojs = require('video.js');
@@ -79,13 +79,13 @@ var videojs = require('video.js');
 // The actual plugin function is exported by this module, but it is also
 // attached to the `Player.prototype`; so, there is no need to assign it
 // to a variable.
-require('videojs-antmedia-webrtc');
+require('videojs-webrtc-plugin');
 
 var player = videojs('my-video');
 
 player.antmediaWebrtc({
-  streamUrl: "ws://[ant-address]/[app]/websocket?streamId=[streamId]",
-  iceServers: "[ { "urls": "stun:stun1.l.google.com:19302" } ]",
+  streamUrl: "ws://[ant-address]/[app]/[streamId].webrtc",
+  iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]',
 });
 ```
 
@@ -94,14 +94,35 @@ player.antmediaWebrtc({
 When using with RequireJS (or another AMD library), get the script in whatever way you prefer and `require` the plugin as you normally would:
 
 ```js
-require(['video.js', 'videojs-antmedia-webrtc'], function(videojs) {
+require(['video.js', 'videojs-webrtc-plugin'], function(videojs) {
   var player = videojs('my-video');
 
   player.antmediaWebrtc({
-    streamUrl: "ws://[ant-address]/[app]/websocket?streamId=[streamId]",
-    iceServers: "[ { "urls": "stun:stun1.l.google.com:19302" } ]",
+    streamUrl: "ws://[ant-address]/[app]/[streamId].webrtc",
+    iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]',
   });
 });
+```
+
+### Handling error-callbacks 
+
+Ant-MediaServer has functionality to handle errors coming from the backend.
+To catch an error, you need to subscribe to the event "ant-error":
+
+```js
+<script src="//path/to/video.min.js"></script>
+<script src="//path/to/videojs-webrtc-plugin.min.js"></script>
+<script>
+  var player = videojs('my-video');
+
+  player.antmediaWebrtc({
+    streamUrl: "ws://[ant-address]/[app]/[streamId].webrtc",
+    iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]',
+  });
+  player.on('ant-error', function(event, errors) {
+    console.log(errors);
+  });
+</script>
 ```
 ## License
 
