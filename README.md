@@ -126,7 +126,7 @@ To catch an error, you need to subscribe to the event "ant-error":
 ```
 ## License
 
-MIT. Copyright (c) ForaSoft
+MIT. Copyright (c) Ant Media
 
 
 [videojs]: http://videojs.com/
