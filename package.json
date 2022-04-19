@@ -1,5 +1,5 @@
 {
-  "name": "videojs-webrtc-plugin",
+  "name": "@antmedia/videojs-webrtc-plugin",
   "version": "1.0.0",
   "description": "streaming via WebRTC with Ant-MediaServer",
   "main": "dist/videojs-webrtc-plugin.cjs.js",
@@ -47,7 +47,7 @@
     "videojs",
     "videojs-plugin"
   ],
-  "author": "ForaSoft",
+  "author": "AntMedia",
   "license": "MIT",
   "vjsstandard": {
     "ignore": [

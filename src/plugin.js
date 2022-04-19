@@ -1,11 +1,8 @@
 import videojs from 'video.js';
-import {version as VERSION} from '../package.json';
 import {WebRTCAdaptor} from './webrtc_adaptor';
 import {ANT_CALLBACKS} from './const/CALLBACKS';
 import ResolutionMenuButton from './components/ResolutionMenuButton';
 import ResolutionMenuItem from './components/ResolutionMenuItem';
-
-const Plugin = videojs.getPlugin('plugin');
 
 // Default options for the plugin.
 const defaults = {
@@ -16,23 +13,24 @@ const defaults = {
  * An advanced Video.js plugin for playing WebRTC stream from Ant-mediaserver
  */
 
-class AntmediaWebrtc extends Plugin {
+class WebRTCHandler {
   /**
-   * Create a AntmediaWebrtc plugin instance.
+   * Create a WebRTC source handler instance.
    *
-   * @param  {Player} player
-   *         A Video.js Player instance.
+   * @param  {Object} source
+   *         Source object that is given in the DOM, includes the stream URL
    *
    * @param  {Object} [options]
-   *         An optional options object.
-   *
-   *         While not a core part of the Video.js plugin architecture, a
-   *         second argument of options is a convenient way to accept inputs
-   *         from your plugin's caller.
+   *         Options include:
+   *            ICE Server
+   *            Tokens
+   *            Subscriber ID
+   *            Subscriber code
    */
-  constructor(player, options) {
-    super(player);
-    this.initiateWebRTCAdaptor(options);
+  constructor(source, tech, options) {
+    this.player = videojs(options.playerId);
+
+    this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
       this.player.addClass('videojs-webrtc-plugin');
     });
@@ -51,20 +49,23 @@ class AntmediaWebrtc extends Plugin {
    * An optional options object.
    *
    */
-  initiateWebRTCAdaptor(options) {
+  initiateWebRTCAdaptor(source, options) {
     this.options = videojs.mergeOptions(defaults, options);
-    this.options.pcConfig = { iceServers: JSON.parse(options.iceServers) };
-    this.options.mediaServerUrl = `${options.streamUrl.split('/').slice(0, 4).join('/')}/websocket`;
-    this.options.streamName = options.streamUrl.split('/')[4].split('.webrtc')[0];
-    this.options.token = this.getUrlParameter('token');
-    this.options.subscriberId = this.getUrlParameter('subscriberId');
-    this.options.subscriberCode = this.getUrlParameter('subscriberCode');
+    this.source = source;
+
+    this.source.pcConfig = { iceServers: JSON.parse(source.iceservers) };
+    this.source.mediaServerUrl = `${source.src.split('/').slice(0, 4).join('/')}/websocket`;
+    this.source.streamName = source.src.split('/')[4].split('.webrtc')[0];
+
+    this.source.token = this.getUrlParameter('token');
+    this.source.subscriberId = this.getUrlParameter('subscriberId');
+    this.source.subscriberCode = this.getUrlParameter('subscriberCode');
 
     this.webRTCAdaptor = new WebRTCAdaptor({
-      websocketUrl: this.options.mediaServerUrl,
-      mediaConstraints: this.options.mediaConstraints,
-      pcConfig: this.options.pcConfig,
-      sdpConstraints: this.options.sdpConstraints,
+      websocketUrl: this.source.mediaServerUrl,
+      mediaConstraints: this.source.mediaConstraints,
+      pcConfig: this.source.pcConfig,
+      sdpConstraints: this.source.sdpConstraints,
       player: this.player,
       callback: (info, obj) => {
         switch (info) {
@@ -111,7 +112,7 @@ class AntmediaWebrtc extends Plugin {
         this.player.addChild(this.errorModal);
         this.errorModal.open();
         this.errorModal.setTimeout(() => this.errorModal.close(), 3000);
-        this.player.trigger('ant-error', { error });
+        this.player.trigger('webrtc-error', { error });
       }
     });
   }
@@ -120,10 +121,10 @@ class AntmediaWebrtc extends Plugin {
    */
   initializedHandler() {
     this.webRTCAdaptor.play(
-      this.options.streamName,
-      this.options.token,
-      this.options.subscriberId,
-      this.options.subscriberCode
+      this.source.streamName,
+      this.source.token,
+      this.source.subscriberId,
+      this.source.subscriberCode
     );
   }
   /**
@@ -132,7 +133,7 @@ class AntmediaWebrtc extends Plugin {
    * @param {Object} obj callback artefacts
    */
   joinStreamHandler(obj) {
-    this.webRTCAdaptor.getStreamInfo(this.options.streamName);
+    this.webRTCAdaptor.getStreamInfo(this.source.streamName);
   }
   /**
    * after left stream.
@@ -168,7 +169,7 @@ class AntmediaWebrtc extends Plugin {
 
     controlBar.el().insertBefore(controlBar.addChild('ResolutionMenuButton', {
       plugin: this,
-      streamName: this.options.streamName
+      streamName: this.source.streamName
     }).el(), fullscreenToggle);
   }
   /**
@@ -200,7 +201,7 @@ class AntmediaWebrtc extends Plugin {
     // console.log(info + ' notification received');
   }
   changeStreamQuality(value) {
-    this.webRTCAdaptor.forceStreamQuality(this.options.streamName, value);
+    this.webRTCAdaptor.forceStreamQuality(this.source.streamName, value);
     this.player.selectedResolution = value;
     this.player.controlBar.getChild('ResolutionMenuButton').update();
 
@@ -212,8 +213,8 @@ class AntmediaWebrtc extends Plugin {
    * @param {string} param callback event info
    */
   getUrlParameter(param) {
-    if (this.options.streamUrl.includes('?')) {
-      const urlParams = this.options.streamUrl.split('?')[1].split('&').reduce(
+    if (this.source.src.includes('?')) {
+      const urlParams = this.source.src.split('?')[1].split('&').reduce(
         (p, e) => {
           const a = e.split('=');
 
@@ -229,14 +230,36 @@ class AntmediaWebrtc extends Plugin {
   }
 }
 
-// Define default values for the plugin's `state` object here.
-AntmediaWebrtc.defaultState = {};
+const webRTCSourceHandler = {
+  name: 'videojs-webrtc-plugin',
+  VERSION: '1.0',
+  canHandleSource(srcObj, options = {}) {
+    const localOptions = videojs.mergeOptions(videojs.options, options);
 
-// Include the version number.
-AntmediaWebrtc.VERSION = VERSION;
+    return webRTCSourceHandler.canPlayType(srcObj.type, localOptions);
+  },
+  handleSource(source, tech, options = {}) {
+    const localOptions = videojs.mergeOptions(videojs.options, options);
 
-// Register the plugin with video.js.
-videojs.registerPlugin('antmediaWebrtc', AntmediaWebrtc);
+    // Register the plugin to source handler tech
+    tech.webrtc = new WebRTCHandler(source, tech, localOptions);
 
-export default AntmediaWebrtc;
+    return tech.webrtc;
+  },
+  // TODO: Implement this function
+  // URL kontrol et
+  // Browser versiyonlarına bak
+  canPlayType(type, options = {}) {
 
+    return 'maybe';
+  }
+};
+
+// register source handlers with the appropriate techs
+videojs.getTech('Html5').registerSourceHandler(webRTCSourceHandler, 0);
+
+export default
+{
+  WebRTCHandler,
+  webRTCSourceHandler
+};

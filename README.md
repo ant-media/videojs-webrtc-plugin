@@ -10,7 +10,7 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Options Object](#options-object)
+  - [Source Object](#source-object)
     - [**streamUrl**](#streamurl)
     - [**iceServers**](#iceservers)
   - [`<script>` Tag](#script-tag)
@@ -30,7 +30,7 @@ npm install --save videojs-webrtc-plugin
 
 To include videojs-webrtc-plugin on your website or web application, use any of the following methods.
 
-### Options Object
+### Source Object
 
 #### **streamUrl** 
 Ant-MediaServer stream address format:
@@ -59,13 +59,16 @@ This is the simplest case. Get the script in whatever way you prefer and include
 ```html
 <script src="//path/to/video.min.js"></script>
 <script src="//path/to/videojs-webrtc-plugin.min.js"></script>
+
+<div id="video_container">
+    <video id=video-player width=960 height=540 class="video-js vjs-default-skin" controls>
+        <source
+           src="ws://localhost:5080/LiveApp/stream1.webrtc" iceServers = '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
+           >
+      </video>
+</div>
 <script>
   var player = videojs('my-video');
-
-  player.antmediaWebrtc({
-    streamUrl: "ws://[ant-address]/[app]/[streamId].webrtc",
-    iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]',
-  });
 </script>
 ```
 

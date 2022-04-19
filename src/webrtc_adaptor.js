@@ -1,10 +1,6 @@
 import {WebSocketAdaptor} from './websocket_adaptor.js';
 import {COMMANDS} from './const/COMMANDS';
 
-// A sample to put it in the src method of the videoJS player
-// so that the stream can be played (stream cannot be played without source)
-const DEFAULT_VIDEO_FALLBACK = 'http://vjs.zencdn.net/v/oceans.mp4';
-
 /**
  * Adaptor for WebRTC methods
  */
@@ -100,7 +96,6 @@ export class WebRTCAdaptor {
    */
   onTrack(event, streamId) {
     if (this.remoteVideo) {
-      this.remoteVideo.src({ type: 'video/mp4', src: DEFAULT_VIDEO_FALLBACK });
       const vid = this.remoteVideo.tech().el();
 
       if (vid.srcObject !== event.streams[0]) {
