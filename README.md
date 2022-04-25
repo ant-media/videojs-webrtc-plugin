@@ -86,9 +86,9 @@ require('videojs-webrtc-plugin');
 
 var player = videojs('my-video');
 
-player.antmediaWebrtc({
-  streamUrl: "ws://[ant-address]/[app]/[streamId].webrtc",
-  iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]',
+player.src({
+  src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8',
+  iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
 });
 ```
 
@@ -100,9 +100,9 @@ When using with RequireJS (or another AMD library), get the script in whatever w
 require(['video.js', 'videojs-webrtc-plugin'], function(videojs) {
   var player = videojs('my-video');
 
-  player.antmediaWebrtc({
-    streamUrl: "ws://[ant-address]/[app]/[streamId].webrtc",
-    iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]',
+  player.src({
+    src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8',
+    iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
   });
 });
 ```
@@ -118,9 +118,9 @@ To catch an error, you need to subscribe to the event "ant-error":
 <script>
   var player = videojs('my-video');
 
-  player.antmediaWebrtc({
-    streamUrl: "ws://[ant-address]/[app]/[streamId].webrtc",
-    iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]',
+  player.src({
+    src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8',
+    iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
   });
   player.on('ant-error', function(event, errors) {
     console.log(errors);
