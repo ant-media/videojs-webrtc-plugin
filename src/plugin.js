@@ -232,9 +232,11 @@ class WebRTCHandler {
 
 const webRTCSourceHandler = {
   name: 'videojs-webrtc-plugin',
-  VERSION: '1.0',
+  VERSION: '1.1',
   canHandleSource(srcObj, options = {}) {
     const localOptions = videojs.mergeOptions(videojs.options, options);
+
+    localOptions.source = srcObj.src;
 
     return webRTCSourceHandler.canPlayType(srcObj.type, localOptions);
   },
@@ -246,12 +248,16 @@ const webRTCSourceHandler = {
 
     return tech.webrtc;
   },
-  // TODO: Implement this function
-  // URL kontrol et
-  // Browser versiyonlarına bak
+
   canPlayType(type, options = {}) {
 
-    return 'maybe';
+    const mediaUrl = options.source;
+
+    if (mediaUrl.split('/')[4].includes('.webrtc')) {
+      return 'maybe';
+    }
+
+    return '';
   }
 };
 
