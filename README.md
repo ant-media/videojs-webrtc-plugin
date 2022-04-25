@@ -87,7 +87,7 @@ require('videojs-webrtc-plugin');
 var player = videojs('my-video');
 
 player.src({
-  src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8',
+  src: 'ws://localhost:5080/LiveApp/stream1.webrtc',
   iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
 });
 ```
@@ -101,7 +101,7 @@ require(['video.js', 'videojs-webrtc-plugin'], function(videojs) {
   var player = videojs('my-video');
 
   player.src({
-    src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8',
+    src: 'ws://localhost:5080/LiveApp/stream1.webrtc',
     iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
   });
 });
@@ -119,7 +119,7 @@ To catch an error, you need to subscribe to the event "ant-error":
   var player = videojs('my-video');
 
   player.src({
-    src: 'https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8',
+    src: 'ws://localhost:5080/LiveApp/stream1.webrtc',
     iceServers: '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
   });
   player.on('ant-error', function(event, errors) {
