@@ -1,6 +1,6 @@
 {
   "name": "@antmedia/videojs-webrtc-plugin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "streaming via WebRTC with Ant-MediaServer",
   "main": "dist/videojs-webrtc-plugin.cjs.js",
   "module": "dist/videojs-webrtc-plugin.es.js",
