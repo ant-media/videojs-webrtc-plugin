@@ -53,7 +53,7 @@ class WebRTCHandler {
     this.options = videojs.mergeOptions(defaults, options);
     this.source = source;
 
-    this.source.pcConfig = { iceServers: JSON.parse(source.iceservers) };
+    this.source.pcConfig = { iceServers: JSON.parse(source.iceServers) };
     this.source.mediaServerUrl = `${source.src.split('/').slice(0, 4).join('/')}/websocket`;
     this.source.streamName = source.src.split('/')[4].split('.webrtc')[0];
 
@@ -91,8 +91,10 @@ class WebRTCHandler {
         }
         default: {
           this.defaultHandler(info);
+          this.player.trigger('webrtc-info', { obj, info });
           break;
         }
+
         }
       },
       callbackError: (error) => {
