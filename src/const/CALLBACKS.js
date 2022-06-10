@@ -4,5 +4,6 @@ export const ANT_CALLBACKS = {
   PLAY_FINISHED: 'play_finished',
   CLOSED: 'closed',
   STREAM_INFORMATION: 'streamInformation',
-  RESOLUTION_CHANGE_INFO: 'resolutionChangeInfo'
+  RESOLUTION_CHANGE_INFO: 'resolutionChangeInfo',
+  ICE_CONNECTION_STATE_CHANGED: 'ice_connection_state_changed'
 };
