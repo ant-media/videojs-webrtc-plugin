@@ -50,6 +50,8 @@ class WebRTCHandler {
    *
    */
   initiateWebRTCAdaptor(source, options) {
+    let iceConnected = false;
+
     this.options = videojs.mergeOptions(defaults, options);
     this.source = source;
 
@@ -68,9 +70,16 @@ class WebRTCHandler {
       sdpConstraints: this.source.sdpConstraints,
       player: this.player,
       callback: (info, obj) => {
+        this.player.trigger('webrtc-info', { obj, info });
         switch (info) {
         case ANT_CALLBACKS.INITIALIZED: {
           this.initializedHandler();
+          break;
+        }
+        case ANT_CALLBACKS.ICE_CONNECTION_STATE_CHANGED: {
+          if (obj.state === 'connected' || obj.state === 'completed') {
+            iceConnected = true;
+          }
           break;
         }
         case ANT_CALLBACKS.PLAY_STARTED: {
@@ -79,6 +88,16 @@ class WebRTCHandler {
         }
         case ANT_CALLBACKS.PLAY_FINISHED: {
           this.leaveStreamHandler(obj);
+          //  if play_finished event is received, it has two meanings
+          //  1.stream is really finished
+          //  2.ice connection cannot be established and server reports play_finished event
+          //  check that publish may start again
+          if (iceConnected) {
+            //  webrtc connection was successful and try to play again with webrtc
+            setTimeout(function() {
+              this.streamInformationHandler(obj);
+            }, 3000);
+          }
           break;
         }
         case ANT_CALLBACKS.STREAM_INFORMATION: {
@@ -89,12 +108,6 @@ class WebRTCHandler {
           this.resolutionChangeHandler(obj);
           break;
         }
-        default: {
-          this.defaultHandler(info);
-          this.player.trigger('webrtc-info', { obj, info });
-          break;
-        }
-
         }
       },
       callbackError: (error) => {
@@ -192,15 +205,6 @@ class WebRTCHandler {
         this.player.play();
       }
     }, 2000);
-  }
-  /**
-   * default handler.
-   *
-   * @param {string} info callback event info
-   */
-  defaultHandler(info) {
-    // eslint-disable-next-line no-console
-    // console.log(info + ' notification received');
   }
   changeStreamQuality(value) {
     this.webRTCAdaptor.forceStreamQuality(this.source.streamName, value);
