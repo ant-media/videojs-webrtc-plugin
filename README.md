@@ -23,7 +23,7 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 ## Installation
 
 ```sh
-npm install --save videojs-webrtc-plugin
+npm install --save @antmedia/videojs-webrtc-plugin
 ```
 
 ## Usage
