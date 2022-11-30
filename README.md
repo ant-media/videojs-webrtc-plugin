@@ -9,6 +9,7 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 
 
 - [Installation](#installation)
+- [Issues](#issues)
 - [Usage](#usage)
   - [Source Object](#source-object)
     - [**streamUrl**](#streamurl)
@@ -23,8 +24,11 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 ## Installation
 
 ```sh
-npm install --save videojs-webrtc-plugin
+npm install --save @antmedia/videojs-webrtc-plugin
 ```
+
+## Issues
+Please create issues at [@ant-media/Ant-Media-Server](https://github.com/ant-media/Ant-Media-Server/issues)
 
 ## Usage
 
