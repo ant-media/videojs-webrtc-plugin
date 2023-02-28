@@ -82,9 +82,9 @@
             iceServers,
           });
         }
-        window.antmediaWebrtc = examplePlayer.antmediaWebrtc({
-          streamUrl,
-          iceServers,
+        window.antmediaWebrtc = examplePlayer.src({
+          src: streamUrl,
+          iceServers: iceServers,
         })
         examplePlayer.play();
       });
