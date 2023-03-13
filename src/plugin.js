@@ -1,6 +1,7 @@
 import videojs from 'video.js';
 import {WebRTCAdaptor} from './webrtc_adaptor';
 import {ANT_CALLBACKS} from './const/CALLBACKS';
+import {ANT_ERROR_CALLBACKS} from './const/ERROR_CALLBACKS';
 import ResolutionMenuButton from './components/ResolutionMenuButton';
 import ResolutionMenuItem from './components/ResolutionMenuItem';
 
@@ -111,7 +112,13 @@ class WebRTCHandler {
         }
       },
       callbackError: (error) => {
-        // add error handler
+        if (error.name === ANT_ERROR_CALLBACKS.HIGH_RESOURCE_USAGE) {
+          // disconnect when server reports high resource usage
+          // it will fire the "closed" callback and and it'll reconnect again.
+          // this is important when it's auto-scaling in the backend
+          this.webRTCAdaptor.closeWebSocket();
+        }
+
         // some of the possible errors, NotFoundError, SecurityError,PermissionDeniedError
         const ModalDialog = videojs.getComponent('ModalDialog');
 
