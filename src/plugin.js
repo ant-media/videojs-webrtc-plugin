@@ -10,10 +10,10 @@ const defaults = {
   sdpConstraints: { OfferToReceiveAudio: true, OfferToReceiveVideo: true },
   mediaConstraints: { video: false, audio: false }
 };
+
 /**
  * An advanced Video.js plugin for playing WebRTC stream from Ant-mediaserver
  */
-
 class WebRTCHandler {
   /**
    * Create a WebRTC source handler instance.
@@ -31,6 +31,8 @@ class WebRTCHandler {
   constructor(source, tech, options) {
     this.player = videojs(options.playerId);
 
+    this.checkAndStopPlaying();
+
     this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
       this.player.addClass('videojs-webrtc-plugin');
@@ -39,6 +41,9 @@ class WebRTCHandler {
       if (this.player.el().getElementsByClassName('vjs-custom-spinner').length) {
         this.player.el().removeChild(this.player.spinner);
       }
+    });
+    this.player.on('dispose', () => {
+      this.checkAndStopPlaying();
     });
     videojs.registerComponent('ResolutionMenuButton', ResolutionMenuButton);
     videojs.registerComponent('ResolutionMenuItem', ResolutionMenuItem);
@@ -58,13 +63,13 @@ class WebRTCHandler {
 
     this.source.pcConfig = { iceServers: JSON.parse(source.iceServers) };
     this.source.mediaServerUrl = `${source.src.split('/').slice(0, 4).join('/')}/websocket`;
-    this.source.streamName = source.src.split('/')[4].split('.webrtc')[0];
+    window.videojsWebrtcPlayerStreamName = this.source.streamName = source.src.split('/')[4].split('.webrtc')[0];
 
     this.source.token = this.getUrlParameter('token');
     this.source.subscriberId = this.getUrlParameter('subscriberId');
     this.source.subscriberCode = this.getUrlParameter('subscriberCode');
 
-    this.webRTCAdaptor = new WebRTCAdaptor({
+    window.videojsWebrtcPlayerWebRTCAdaptor = this.webRTCAdaptor = new WebRTCAdaptor({
       websocketUrl: this.source.mediaServerUrl,
       mediaConstraints: this.source.mediaConstraints,
       pcConfig: this.source.pcConfig,
@@ -240,6 +245,15 @@ class WebRTCHandler {
       return urlParams[param];
     }
     return null;
+  }
+
+  /**
+   * stop playing if the same player reused
+   */
+  checkAndStopPlaying() {
+    if (window.videojsWebrtcPlayerWebRTCAdaptor && window.videojsWebrtcPlayerStreamName) {
+      window.videojsWebrtcPlayerWebRTCAdaptor.stop(window.videojsWebrtcPlayerStreamName);
+    }
   }
 }
 

@@ -75,17 +75,12 @@
         const examplePlayer = window.examplePlayer = videojs('videojs-webrtc-player');
         const streamUrl = document.getElementById('streamUrl').value;
         const iceServers = document.getElementById('iceServers').value;
-        if (window.antmediaWebrtc) {
-          window.antmediaWebrtc.webRTCAdaptor.stop(window.antmediaWebrtc.options.streamName)
-          return window.antmediaWebrtc.initiateWebRTCAdaptor({
-            streamUrl,
-            iceServers,
-          });
-        }
+
         window.antmediaWebrtc = examplePlayer.src({
           src: streamUrl,
           iceServers: iceServers,
         })
+
         examplePlayer.play();
       });
     }(window, window.videojs));
