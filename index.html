@@ -76,7 +76,7 @@
         const streamUrl = document.getElementById('streamUrl').value;
         const iceServers = document.getElementById('iceServers').value;
 
-        window.antmediaWebrtc = examplePlayer.src({
+        examplePlayer.src({
           src: streamUrl,
           iceServers: iceServers,
         })
