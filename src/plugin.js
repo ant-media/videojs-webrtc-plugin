@@ -31,6 +31,8 @@ class WebRTCHandler {
   constructor(source, tech, options) {
     this.player = videojs(options.playerId);
 
+    // when we update video player's source, constructor works again.
+    // before initialisation step, stop the old one
     this.checkAndStopPlaying();
 
     this.initiateWebRTCAdaptor(source, options);
@@ -248,7 +250,7 @@ class WebRTCHandler {
   }
 
   /**
-   * stop playing if the same player reused
+   * stop playing if WebRTCAdaptor and StreamName exists
    */
   checkAndStopPlaying() {
     if (window.videojsWebrtcPlayerWebRTCAdaptor && window.videojsWebrtcPlayerStreamName) {
