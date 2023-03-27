@@ -31,10 +31,6 @@ class WebRTCHandler {
   constructor(source, tech, options) {
     this.player = videojs(options.playerId);
 
-    // when we update video player's source, constructor works again.
-    // before initialisation step, stop the old one
-    this.checkAndStopPlaying();
-
     this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
       this.player.addClass('videojs-webrtc-plugin');
@@ -43,9 +39,6 @@ class WebRTCHandler {
       if (this.player.el().getElementsByClassName('vjs-custom-spinner').length) {
         this.player.el().removeChild(this.player.spinner);
       }
-    });
-    this.player.on('dispose', () => {
-      this.checkAndStopPlaying();
     });
     videojs.registerComponent('ResolutionMenuButton', ResolutionMenuButton);
     videojs.registerComponent('ResolutionMenuItem', ResolutionMenuItem);
@@ -65,13 +58,13 @@ class WebRTCHandler {
 
     this.source.pcConfig = { iceServers: JSON.parse(source.iceServers) };
     this.source.mediaServerUrl = `${source.src.split('/').slice(0, 4).join('/')}/websocket`;
-    window.videojsWebrtcPlayerStreamName = this.source.streamName = source.src.split('/')[4].split('.webrtc')[0];
+    this.source.streamName = source.src.split('/')[4].split('.webrtc')[0];
 
     this.source.token = this.getUrlParameter('token');
     this.source.subscriberId = this.getUrlParameter('subscriberId');
     this.source.subscriberCode = this.getUrlParameter('subscriberCode');
 
-    window.videojsWebrtcPlayerWebRTCAdaptor = this.webRTCAdaptor = new WebRTCAdaptor({
+    this.webRTCAdaptor = new WebRTCAdaptor({
       websocketUrl: this.source.mediaServerUrl,
       mediaConstraints: this.source.mediaConstraints,
       pcConfig: this.source.pcConfig,
@@ -249,12 +242,11 @@ class WebRTCHandler {
     return null;
   }
 
-  /**
-   * stop playing if WebRTCAdaptor and StreamName exists
-   */
-  checkAndStopPlaying() {
-    if (window.videojsWebrtcPlayerWebRTCAdaptor && window.videojsWebrtcPlayerStreamName) {
-      window.videojsWebrtcPlayerWebRTCAdaptor.stop(window.videojsWebrtcPlayerStreamName);
+  dispose() {
+    if (this.webRTCAdaptor) {
+      this.webRTCAdaptor.stop(this.webRTCAdaptor.playStreamId);
+      this.webRTCAdaptor.closeWebSocket();
+      this.webRTCAdaptor = null;
     }
   }
 }
@@ -271,6 +263,11 @@ const webRTCSourceHandler = {
   },
   handleSource(source, tech, options = {}) {
     const localOptions = videojs.mergeOptions(videojs.options, options);
+
+    if (tech.webrtc) {
+      tech.webrtc.dispose();
+      tech.webrtc = null;
+    }
 
     // Register the plugin to source handler tech
     tech.webrtc = new WebRTCHandler(source, tech, localOptions);

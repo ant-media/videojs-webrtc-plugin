@@ -5,7 +5,6 @@
   "main": "dist/videojs-webrtc-plugin.cjs.js",
   "module": "dist/videojs-webrtc-plugin.es.js",
   "browser": "dist/videojs-webrtc-plugin.js",
-  "env":{"browser": true},
   "generator-videojs-plugin": {
     "version": "8.0.0"
   },
