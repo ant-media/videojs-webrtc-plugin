@@ -266,7 +266,7 @@ const webRTCSourceHandler = {
 
     const mediaUrl = options.source;
 
-    if (mediaUrl.split('/')[4].includes('.webrtc')) {
+    if (mediaUrl.split('/').at(-1).includes('.webrtc')) {
       return 'maybe';
     }
 
