@@ -10,10 +10,10 @@ const defaults = {
   sdpConstraints: { OfferToReceiveAudio: true, OfferToReceiveVideo: true },
   mediaConstraints: { video: false, audio: false }
 };
+
 /**
  * An advanced Video.js plugin for playing WebRTC stream from Ant-mediaserver
  */
-
 class WebRTCHandler {
   /**
    * Create a WebRTC source handler instance.
@@ -241,6 +241,14 @@ class WebRTCHandler {
     }
     return null;
   }
+
+  dispose() {
+    if (this.webRTCAdaptor) {
+      this.webRTCAdaptor.stop(this.webRTCAdaptor.playStreamId);
+      this.webRTCAdaptor.closeWebSocket();
+      this.webRTCAdaptor = null;
+    }
+  }
 }
 
 const webRTCSourceHandler = {
@@ -255,6 +263,11 @@ const webRTCSourceHandler = {
   },
   handleSource(source, tech, options = {}) {
     const localOptions = videojs.mergeOptions(videojs.options, options);
+
+    if (tech.webrtc) {
+      tech.webrtc.dispose();
+      tech.webrtc = null;
+    }
 
     // Register the plugin to source handler tech
     tech.webrtc = new WebRTCHandler(source, tech, localOptions);
