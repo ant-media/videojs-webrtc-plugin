@@ -83,6 +83,15 @@ class WebRTCHandler {
           }
           break;
         }
+        case ANT_CALLBACKS.CLOSED: {
+          if (iceConnected) {
+            //  webrtc connection was successful and try to play again with webrtc
+            this.webRTCAdaptor.getStreamInfo(this.source.streamName);
+          } else {
+            this.initiateWebRTCAdaptor(this.source, this.options);
+          }
+          break;
+        }
         case ANT_CALLBACKS.PLAY_STARTED: {
           this.joinStreamHandler(obj);
           break;
