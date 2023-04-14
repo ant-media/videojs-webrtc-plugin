@@ -25,6 +25,7 @@ export class WebRTCAdaptor {
     this.viewerInfo = '';
     this.idMapping = [];
     this.candidateTypes = ['udp', 'tcp'];
+    this.dataChannelEnabled = true;
 
     for (const key in initialValues) {
       if (initialValues.hasOwnProperty(key)) {
@@ -143,7 +144,73 @@ export class WebRTCAdaptor {
       }
     }
   }
+  initDataChannel(streamId, dataChannel) {
+    dataChannel.onerror = (error) => {
+        console.log("Data Channel Error:", error);
+        var obj = {
+            streamId: streamId,
+            error: error
+        };
+        console.log("channel status: ", dataChannel.readyState);
+        if (dataChannel.readyState != "closed") {
+          this.callback('data_channel_error', obj);
+        }
+    };
 
+    dataChannel.onmessage = (event) => {
+        var obj = {
+            streamId: streamId,
+            data: event.data,
+        };
+
+        var data = obj.data;
+        
+        if (typeof data === 'string' || data instanceof String) {
+            this.callback('data_received', obj);
+        } else {
+            var length = data.length || data.size || data.byteLength;
+
+            var view = new Int32Array(data, 0, 1);
+            var token = view[0];
+
+            var msg = this.receivingMessages[token];
+            if (msg == undefined) {
+                var view = new Int32Array(data, 0, 2);
+                var size = view[1];
+                msg = new ReceivingMessage(size);
+                this.receivingMessages[token] = msg;
+                if (length > 8) {
+                    console.error("something went wrong in msg receiving");
+                }
+                return;
+            }
+
+            var rawData = data.slice(4, length);
+
+            var dataView = new Uint8Array(msg.data);
+            dataView.set(new Uint8Array(rawData), msg.received, length - 4);
+            msg.received += length - 4;
+
+            if (msg.size == msg.received) {
+                obj.data = msg.data;
+                this.callback('data_received', obj);
+
+            }
+        }
+    };
+
+    dataChannel.onopen = () => {
+        this.remotePeerConnection[streamId].dataChannel = dataChannel;
+        console.log("Data channel is opened");
+        this.callback('data_channel_opened', streamId);
+    };
+
+    dataChannel.onclose = () => {
+        console.log("Data channel is closed");
+        this.callback('data_channel_closed', obj);
+
+    };
+}
   /**
    * Initiate WebRtc PeerConnection.
    *
@@ -170,6 +237,14 @@ export class WebRTCAdaptor {
 
         this.callback('ice_connection_state_changed', obj);
       };
+    }
+    if (this.dataChannelEnabled) {
+
+      //in play mode, server opens the data channel
+      this.remotePeerConnection[streamId].ondatachannel = ev => {
+          this.initDataChannel(streamId, ev.channel);
+      };
+
     }
   }
 
@@ -374,5 +449,49 @@ export class WebRTCAdaptor {
     };
 
     this.webSocketAdaptor.send(JSON.stringify(jsCmd));
+  }
+  /**
+   * Called to send data via DataChannel. DataChannel should be enabled on AMS settings.
+   *     streamId: unique id for the stream
+   *   data: data that you want to send. It may be a text (may in Json format or not) or binary
+   */
+sendData(streamId, data) {
+  var CHUNK_SIZE = 16000;
+  if (this.remotePeerConnection[streamId] !== undefined) {
+      var dataChannel = this.remotePeerConnection[streamId].dataChannel;
+      var length = data.length || data.size || data.byteLength;
+      var sent = 0;
+      if(dataChannel == undefined || dataChannel == null){
+      this.callback('data_channel_not_open');
+      return;
+      }
+      if (typeof data === 'string' || data instanceof String) {
+          dataChannel.send(data);
+      } else {
+          var token = Math.floor(Math.random() * 999999);
+          let header = new Int32Array(2);
+          header[0] = token;
+          header[1] = length;
+
+          dataChannel.send(header);
+
+          var sent = 0;
+          while (sent < length) {
+              var size = Math.min(length - sent, CHUNK_SIZE);
+              var buffer = new Uint8Array(size + 4);
+              var tokenArray = new Int32Array(1);
+              tokenArray[0] = token;
+              buffer.set(new Uint8Array(tokenArray.buffer, 0, 4), 0);
+
+              var chunk = data.slice(sent, sent + size);
+              buffer.set(new Uint8Array(chunk), 4);
+              sent += size;
+
+              dataChannel.send(buffer);
+          }
+      }
+      } else {
+          console.warn("Send data is called for undefined peer connection with stream id: " + streamId);
+      }
   }
 }
