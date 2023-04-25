@@ -30,10 +30,10 @@ class WebRTCHandler {
    */
   constructor(source, tech, options) {
     this.player = videojs(options.playerId);
-    
-    this.player.sendData=(streamid,data)=>{
-      this.webRTCAdaptor.sendData(streamid,data);
-    }
+
+    this.player.sendData = (streamid, data)=>{
+      this.webRTCAdaptor.sendData(streamid, data);
+    };
     this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
       this.player.addClass('videojs-webrtc-plugin');
@@ -112,12 +112,15 @@ class WebRTCHandler {
           this.resolutionChangeHandler(obj);
           break;
         }
-        case ANT_CALLBACKS.DATA_RECEIVED:{
-          if(this.player.onmessage != undefined || this.player.onmessage != null)
-          this.player.onmessage(obj.streamId,obj.data)
+        case ANT_CALLBACKS.DATA_RECEIVED: {
+          if (this.player.onmessage !== undefined || this.player.onmessage !== null) {
+            this.player.onmessage(obj.streamId, obj.data);
+          }
+          break;
         }
-        case ANT_CALLBACKS.DATACHANNEL_NOT_OPEN:{
-          console.debug("you are sending message before the data channel is opened")
+        case ANT_CALLBACKS.DATACHANNEL_NOT_OPEN: {
+          console.debug('you are sending message before the data channel is opened');
+          break;
         }
         }
       },

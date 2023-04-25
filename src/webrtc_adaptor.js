@@ -1,5 +1,18 @@
-import {WebSocketAdaptor} from './websocket_adaptor.js';
-import {COMMANDS} from './const/COMMANDS';
+import { WebSocketAdaptor } from './websocket_adaptor.js';
+import { COMMANDS } from './const/COMMANDS';
+
+/**
+ * This structure is used to handle large size data channel messages (like image)
+ * which should be splitted into chunks while sending and receiving.
+ *
+ */
+class ReceivingMessage {
+  constructor(size) {
+    this.size = size;
+    this.received = 0;
+    this.data = new ArrayBuffer(size);
+  }
+}
 
 /**
  * Adaptor for WebRTC methods
@@ -48,14 +61,14 @@ export class WebRTCAdaptor {
   play(streamId, token, subscriberId, subscriberCode) {
     this.playStreamId.push(streamId);
     const jsCmd =
-      {
-        command: COMMANDS.PLAY,
-        streamId,
-        token,
-        subscriberId: subscriberId ? subscriberId : '',
-        subscriberCode: subscriberCode ? subscriberCode : '',
-        viewerInfo: this.viewerInfo
-      };
+    {
+      command: COMMANDS.PLAY,
+      streamId,
+      token,
+      subscriberId: subscriberId ? subscriberId : '',
+      subscriberCode: subscriberCode ? subscriberCode : '',
+      viewerInfo: this.viewerInfo
+    };
 
     this.webSocketAdaptor.send(JSON.stringify(jsCmd));
   }
@@ -146,71 +159,73 @@ export class WebRTCAdaptor {
   }
   initDataChannel(streamId, dataChannel) {
     dataChannel.onerror = (error) => {
-        console.log("Data Channel Error:", error);
-        var obj = {
-            streamId: streamId,
-            error: error
-        };
-        console.log("channel status: ", dataChannel.readyState);
-        if (dataChannel.readyState != "closed") {
-          this.callback('data_channel_error', obj);
-        }
+      console.log('Data Channel Error:', error);
+      const obj = {
+        streamId,
+        error
+      };
+
+      console.log('channel status: ', dataChannel.readyState);
+      if (dataChannel.readyState !== 'closed') {
+        this.callback('data_channel_error', obj);
+      }
     };
 
     dataChannel.onmessage = (event) => {
-        var obj = {
-            streamId: streamId,
-            data: event.data,
-        };
+      const obj = {
+        streamId,
+        data: event.data
+      };
 
-        var data = obj.data;
-        
-        if (typeof data === 'string' || data instanceof String) {
-            this.callback('data_received', obj);
-        } else {
-            var length = data.length || data.size || data.byteLength;
+      const data = obj.data;
 
-            var view = new Int32Array(data, 0, 1);
-            var token = view[0];
+      if (typeof data === 'string' || data instanceof String) {
+        this.callback('data_received', obj);
+      } else {
+        const length = data.length || data.size || data.byteLength;
 
-            var msg = this.receivingMessages[token];
-            if (msg == undefined) {
-                var view = new Int32Array(data, 0, 2);
-                var size = view[1];
-                msg = new ReceivingMessage(size);
-                this.receivingMessages[token] = msg;
-                if (length > 8) {
-                    console.error("something went wrong in msg receiving");
-                }
-                return;
-            }
+        let view = new Int32Array(data, 0, 1);
+        const token = view[0];
+        let msg = this.receivingMessages[token];
 
-            var rawData = data.slice(4, length);
+        if (msg === undefined) {
+          view = new Int32Array(data, 0, 2);
+          const size = view[1];
 
-            var dataView = new Uint8Array(msg.data);
-            dataView.set(new Uint8Array(rawData), msg.received, length - 4);
-            msg.received += length - 4;
-
-            if (msg.size == msg.received) {
-                obj.data = msg.data;
-                this.callback('data_received', obj);
-
-            }
+          msg = new ReceivingMessage(size);
+          this.receivingMessages[token] = msg;
+          if (length > 8) {
+            console.error('something went wrong in msg receiving');
+          }
+          return;
         }
+
+        const rawData = data.slice(4, length);
+        const dataView = new Uint8Array(msg.data);
+
+        dataView.set(new Uint8Array(rawData), msg.received, length - 4);
+        msg.received += length - 4;
+
+        if (msg.size === msg.received) {
+          obj.data = msg.data;
+          this.callback('data_received', obj);
+
+        }
+      }
     };
 
     dataChannel.onopen = () => {
-        this.remotePeerConnection[streamId].dataChannel = dataChannel;
-        console.log("Data channel is opened");
-        this.callback('data_channel_opened', streamId);
+      this.remotePeerConnection[streamId].dataChannel = dataChannel;
+      console.log('Data channel is opened');
+      this.callback('data_channel_opened', streamId);
     };
 
     dataChannel.onclose = () => {
-        console.log("Data channel is closed");
-        this.callback('data_channel_closed', obj);
+      console.log('Data channel is closed');
+      this.callback('data_channel_closed', streamId);
 
     };
-}
+  }
   /**
    * Initiate WebRtc PeerConnection.
    *
@@ -233,16 +248,16 @@ export class WebRTCAdaptor {
       };
 
       this.remotePeerConnection[streamId].oniceconnectionstatechange = () => {
-        const obj = {state: this.remotePeerConnection[streamId].iceConnectionState, streamId};
+        const obj = { state: this.remotePeerConnection[streamId].iceConnectionState, streamId };
 
         this.callback('ice_connection_state_changed', obj);
       };
     }
     if (this.dataChannelEnabled) {
 
-      //in play mode, server opens the data channel
+      // in play mode, server opens the data channel
       this.remotePeerConnection[streamId].ondatachannel = ev => {
-          this.initDataChannel(streamId, ev.channel);
+        this.initDataChannel(streamId, ev.channel);
       };
 
     }
@@ -455,43 +470,47 @@ export class WebRTCAdaptor {
    *     streamId: unique id for the stream
    *   data: data that you want to send. It may be a text (may in Json format or not) or binary
    */
-sendData(streamId, data) {
-  var CHUNK_SIZE = 16000;
-  if (this.remotePeerConnection[streamId] !== undefined) {
-      var dataChannel = this.remotePeerConnection[streamId].dataChannel;
-      var length = data.length || data.size || data.byteLength;
-      var sent = 0;
-      if(dataChannel == undefined || dataChannel == null){
-      this.callback('data_channel_not_open');
-      return;
+  sendData(streamId, data) {
+    const CHUNK_SIZE = 16000;
+
+    if (this.remotePeerConnection[streamId] !== undefined) {
+      const dataChannel = this.remotePeerConnection[streamId].dataChannel;
+      const length = data.length || data.size || data.byteLength;
+      let sent = 0;
+
+      if (dataChannel === undefined || dataChannel === null) {
+        this.callback('data_channel_not_open');
+        return;
       }
       if (typeof data === 'string' || data instanceof String) {
-          dataChannel.send(data);
+        dataChannel.send(data);
       } else {
-          var token = Math.floor(Math.random() * 999999);
-          let header = new Int32Array(2);
-          header[0] = token;
-          header[1] = length;
+        const token = Math.floor(Math.random() * 999999);
+        const header = new Int32Array(2);
 
-          dataChannel.send(header);
+        header[0] = token;
+        header[1] = length;
 
-          var sent = 0;
-          while (sent < length) {
-              var size = Math.min(length - sent, CHUNK_SIZE);
-              var buffer = new Uint8Array(size + 4);
-              var tokenArray = new Int32Array(1);
-              tokenArray[0] = token;
-              buffer.set(new Uint8Array(tokenArray.buffer, 0, 4), 0);
+        dataChannel.send(header);
 
-              var chunk = data.slice(sent, sent + size);
-              buffer.set(new Uint8Array(chunk), 4);
-              sent += size;
+        sent = 0;
+        while (sent < length) {
+          const size = Math.min(length - sent, CHUNK_SIZE);
+          const buffer = new Uint8Array(size + 4);
+          const tokenArray = new Int32Array(1);
 
-              dataChannel.send(buffer);
-          }
+          tokenArray[0] = token;
+          buffer.set(new Uint8Array(tokenArray.buffer, 0, 4), 0);
+          const chunk = data.slice(sent, sent + size);
+
+          buffer.set(new Uint8Array(chunk), 4);
+          sent += size;
+
+          dataChannel.send(buffer);
+        }
       }
-      } else {
-          console.warn("Send data is called for undefined peer connection with stream id: " + streamId);
-      }
+    } else {
+      console.warn('Send data is called for undefined peer connection with stream id: ' + streamId);
+    }
   }
 }
