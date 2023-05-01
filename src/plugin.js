@@ -60,8 +60,10 @@ class WebRTCHandler {
     this.source = source;
 
     this.source.pcConfig = { iceServers: JSON.parse(source.iceServers) };
-    this.source.mediaServerUrl = `${source.src.split('/').slice(0, 4).join('/')}/websocket`;
-    this.source.streamName = source.src.split('/')[4].split('.webrtc')[0];
+    // replace the stream name with websocket url
+    this.source.mediaServerUrl = source.src.replace(source.src.split('/').at(-1), 'websocket');
+    // get the stream name from the url
+    this.source.streamName = source.src.split('/').at(-1).split('.webrtc')[0];
 
     this.source.token = this.getUrlParameter('token');
     this.source.subscriberId = this.getUrlParameter('subscriberId');
@@ -258,7 +260,7 @@ class WebRTCHandler {
 
   dispose() {
     if (this.webRTCAdaptor) {
-      this.webRTCAdaptor.stop(this.webRTCAdaptor.playStreamId);
+      this.webRTCAdaptor.stop(this.source.streamName);
       this.webRTCAdaptor.closeWebSocket();
       this.webRTCAdaptor = null;
     }
