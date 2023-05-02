@@ -1,5 +1,4 @@
 import videojs from 'video.js';
-
 import {ANT_CALLBACKS} from './const/CALLBACKS';
 import {ANT_ERROR_CALLBACKS} from './const/ERROR_CALLBACKS';
 import ResolutionMenuButton from './components/ResolutionMenuButton';
@@ -32,12 +31,11 @@ class WebRTCHandler {
   constructor(source, tech, options) {
     this.player = videojs(options.playerId);
 
-    Object.defineProperty(this.player, "sendDataViaWebRTC", {
-        value: (data) => {
-            this.webRTCAdaptor.sendData(this.source.streamName, data);
-        }
+    Object.defineProperty(this.player, 'sendDataViaWebRTC', {
+      value: (data) => {
+        this.webRTCAdaptor.sendData(this.source.streamName, data);
+      }
     });
-
 
     this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
@@ -75,7 +73,9 @@ class WebRTCHandler {
     this.source.subscriberCode = this.getUrlParameter('subscriberCode');
 
     this.webRTCAdaptor = new WebRTCAdaptor({
+      /* eslint-disable camelcase */
       websocket_url: this.source.mediaServerUrl,
+      /* eslint-enable camelcase */
       mediaConstraints: this.source.mediaConstraints,
       pcConfig: this.source.pcConfig,
       isPlayMode: true,
@@ -124,7 +124,6 @@ class WebRTCHandler {
           break;
         }
         case ANT_CALLBACKS.DATACHANNEL_NOT_OPEN: {
-          console.debug('you are sending message before the data channel is opened');
           break;
         }
         case ANT_CALLBACKS.NEW_TRACK_AVAILABLE: {
@@ -135,7 +134,7 @@ class WebRTCHandler {
           }
           break;
         }
-      }
+        }
       },
       callbackError: (error) => {
         if (error.name === ANT_ERROR_CALLBACKS.HIGH_RESOURCE_USAGE) {
