@@ -1,9 +1,9 @@
 import videojs from 'video.js';
-import {WebRTCAdaptor} from './webrtc_adaptor';
 import {ANT_CALLBACKS} from './const/CALLBACKS';
 import {ANT_ERROR_CALLBACKS} from './const/ERROR_CALLBACKS';
 import ResolutionMenuButton from './components/ResolutionMenuButton';
 import ResolutionMenuItem from './components/ResolutionMenuItem';
+import { WebRTCAdaptor } from '@antmedia/webrtc_adaptor';
 
 // Default options for the plugin.
 const defaults = {
@@ -31,6 +31,12 @@ class WebRTCHandler {
   constructor(source, tech, options) {
     this.player = videojs(options.playerId);
 
+    Object.defineProperty(this.player, 'sendDataViaWebRTC', {
+      value: (data) => {
+        this.webRTCAdaptor.sendData(this.source.streamName, data);
+      }
+    });
+
     this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
       this.player.addClass('videojs-webrtc-plugin');
@@ -57,19 +63,23 @@ class WebRTCHandler {
     this.source = source;
 
     this.source.pcConfig = { iceServers: JSON.parse(source.iceServers) };
-    this.source.mediaServerUrl = `${source.src.split('/').slice(0, 4).join('/')}/websocket`;
-    this.source.streamName = source.src.split('/')[4].split('.webrtc')[0];
+    // replace the stream name with websocket url
+    this.source.mediaServerUrl = source.src.replace(source.src.split('/').at(-1), 'websocket');
+    // get the stream name from the url
+    this.source.streamName = source.src.split('/').at(-1).split('.webrtc')[0];
 
     this.source.token = this.getUrlParameter('token');
     this.source.subscriberId = this.getUrlParameter('subscriberId');
     this.source.subscriberCode = this.getUrlParameter('subscriberCode');
 
     this.webRTCAdaptor = new WebRTCAdaptor({
-      websocketUrl: this.source.mediaServerUrl,
+      /* eslint-disable camelcase */
+      websocket_url: this.source.mediaServerUrl,
+      /* eslint-enable camelcase */
       mediaConstraints: this.source.mediaConstraints,
       pcConfig: this.source.pcConfig,
+      isPlayMode: true,
       sdpConstraints: this.source.sdpConstraints,
-      player: this.player,
       callback: (info, obj) => {
         this.player.trigger('webrtc-info', { obj, info });
         switch (info) {
@@ -109,6 +119,21 @@ class WebRTCHandler {
           this.resolutionChangeHandler(obj);
           break;
         }
+        case ANT_CALLBACKS.DATA_RECEIVED: {
+          this.player.trigger('webrtc-data-received', { obj });
+          break;
+        }
+        case ANT_CALLBACKS.DATACHANNEL_NOT_OPEN: {
+          break;
+        }
+        case ANT_CALLBACKS.NEW_TRACK_AVAILABLE: {
+          const vid = this.player.tech().el();
+
+          if (vid.srcObject !== obj.stream) {
+            vid.srcObject = obj.stream;
+          }
+          break;
+        }
         }
       },
       callbackError: (error) => {
@@ -135,6 +160,7 @@ class WebRTCHandler {
         this.errorModal.open();
         this.errorModal.setTimeout(() => this.errorModal.close(), 3000);
         this.player.trigger('webrtc-error', { error });
+
       }
     });
   }
@@ -244,7 +270,7 @@ class WebRTCHandler {
 
   dispose() {
     if (this.webRTCAdaptor) {
-      this.webRTCAdaptor.stop(this.webRTCAdaptor.playStreamId);
+      this.webRTCAdaptor.stop(this.source.streamName);
       this.webRTCAdaptor.closeWebSocket();
       this.webRTCAdaptor = null;
     }
