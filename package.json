@@ -79,6 +79,7 @@
     "README.md": "doctoc --notitle"
   },
   "dependencies": {
+    "@antmedia/webrtc_adaptor": "^2.5.3",
     "global": "^4.4.0",
     "video.js": "^6 || ^7"
   },

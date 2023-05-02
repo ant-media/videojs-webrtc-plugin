@@ -1,9 +1,10 @@
 import videojs from 'video.js';
-import {WebRTCAdaptor} from './webrtc_adaptor';
+
 import {ANT_CALLBACKS} from './const/CALLBACKS';
 import {ANT_ERROR_CALLBACKS} from './const/ERROR_CALLBACKS';
 import ResolutionMenuButton from './components/ResolutionMenuButton';
 import ResolutionMenuItem from './components/ResolutionMenuItem';
+import { WebRTCAdaptor } from '@antmedia/webrtc_adaptor';
 
 // Default options for the plugin.
 const defaults = {
@@ -31,9 +32,13 @@ class WebRTCHandler {
   constructor(source, tech, options) {
     this.player = videojs(options.playerId);
 
-    this.player.sendData = (streamid, data)=>{
-      this.webRTCAdaptor.sendData(streamid, data);
-    };
+    Object.defineProperty(this.player, "sendDataViaWebRTC", {
+        value: (data) => {
+            this.webRTCAdaptor.sendData(this.source.streamName, data);
+        }
+    });
+
+
     this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
       this.player.addClass('videojs-webrtc-plugin');
@@ -70,11 +75,11 @@ class WebRTCHandler {
     this.source.subscriberCode = this.getUrlParameter('subscriberCode');
 
     this.webRTCAdaptor = new WebRTCAdaptor({
-      websocketUrl: this.source.mediaServerUrl,
+      websocket_url: this.source.mediaServerUrl,
       mediaConstraints: this.source.mediaConstraints,
       pcConfig: this.source.pcConfig,
+      isPlayMode: true,
       sdpConstraints: this.source.sdpConstraints,
-      player: this.player,
       callback: (info, obj) => {
         this.player.trigger('webrtc-info', { obj, info });
         switch (info) {
@@ -115,16 +120,22 @@ class WebRTCHandler {
           break;
         }
         case ANT_CALLBACKS.DATA_RECEIVED: {
-          if (this.player.onmessage !== undefined || this.player.onmessage !== null) {
-            this.player.onmessage(obj.streamId, obj.data);
-          }
+          this.player.trigger('webrtc-data-received', { obj });
           break;
         }
         case ANT_CALLBACKS.DATACHANNEL_NOT_OPEN: {
           console.debug('you are sending message before the data channel is opened');
           break;
         }
+        case ANT_CALLBACKS.NEW_TRACK_AVAILABLE: {
+          const vid = this.player.tech().el();
+
+          if (vid.srcObject !== obj.stream) {
+            vid.srcObject = obj.stream;
+          }
+          break;
         }
+      }
       },
       callbackError: (error) => {
         if (error.name === ANT_ERROR_CALLBACKS.HIGH_RESOURCE_USAGE) {
