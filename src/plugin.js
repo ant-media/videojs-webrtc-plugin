@@ -1,6 +1,5 @@
 import videojs from 'video.js';
 import {ANT_CALLBACKS} from './const/CALLBACKS';
-import {ANT_ERROR_CALLBACKS} from './const/ERROR_CALLBACKS';
 import ResolutionMenuButton from './components/ResolutionMenuButton';
 import ResolutionMenuItem from './components/ResolutionMenuItem';
 import { WebRTCAdaptor } from '@antmedia/webrtc_adaptor';
@@ -11,10 +10,26 @@ const defaults = {
   mediaConstraints: { video: false, audio: false }
 };
 
+// const Component = videojs.getComponent('Component');
 /**
- * An advanced Video.js plugin for playing WebRTC stream from Ant-mediaserver
+ * An advanced Video.js plugin for playing WebRTC stream from Ant Media Server
+ *
+ * Test Scenario #1
+ * 1. Publish a stream from a WebRTC endpoint to Ant Media Server
+ * 2. Play the stream with WebRTC
+ * 3. Restart publishing the stream
+ * 4. It should play automatically
+ *
+ * Test Scenario #2
+ * 1. Publish a stream from a WebRTC endpoint to Ant Media Server
+ * 2. Let the server return error(highresourceusage, etc.)
+ * 3. WebSocket should be disconnected and play should try again
+ *
+ * Test Scenario #3
+ * 1. Show error message if packet lost and jitter and RTT is high
  */
 class WebRTCHandler {
+
   /**
    * Create a WebRTC source handler instance.
    *
@@ -31,11 +46,16 @@ class WebRTCHandler {
   constructor(source, tech, options) {
     this.player = videojs(options.playerId);
 
-    Object.defineProperty(this.player, 'sendDataViaWebRTC', {
-      value: (data) => {
-        this.webRTCAdaptor.sendData(this.source.streamName, data);
-      }
-    });
+    if (!this.player.hasOwnProperty('sendDataViaWebRTC')) {
+      Object.defineProperty(this.player, 'sendDataViaWebRTC', {
+        value: (data) => {
+          this.webRTCAdaptor.sendData(this.source.streamName, data);
+        }
+      });
+    }
+
+    this.isPlaying = false;
+    this.disposed = false;
 
     this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
@@ -46,6 +66,7 @@ class WebRTCHandler {
         this.player.el().removeChild(this.player.spinner);
       }
     });
+
     videojs.registerComponent('ResolutionMenuButton', ResolutionMenuButton);
     videojs.registerComponent('ResolutionMenuItem', ResolutionMenuItem);
   }
@@ -57,7 +78,6 @@ class WebRTCHandler {
    *
    */
   initiateWebRTCAdaptor(source, options) {
-    let iceConnected = false;
 
     this.options = videojs.mergeOptions(defaults, options);
     this.source = source;
@@ -81,34 +101,29 @@ class WebRTCHandler {
       isPlayMode: true,
       sdpConstraints: this.source.sdpConstraints,
       callback: (info, obj) => {
+        if (this.disposed) {
+          return;
+        }
         this.player.trigger('webrtc-info', { obj, info });
         switch (info) {
         case ANT_CALLBACKS.INITIALIZED: {
-          this.initializedHandler();
+          this.play();
           break;
         }
         case ANT_CALLBACKS.ICE_CONNECTION_STATE_CHANGED: {
-          if (obj.state === 'connected' || obj.state === 'completed') {
-            iceConnected = true;
-          }
+
           break;
         }
         case ANT_CALLBACKS.PLAY_STARTED: {
           this.joinStreamHandler(obj);
+          this.isPlaying = true;
+          this.player.trigger('play');
           break;
         }
         case ANT_CALLBACKS.PLAY_FINISHED: {
           this.leaveStreamHandler(obj);
-          //  if play_finished event is received, it has two meanings
-          //  1.stream is really finished
-          //  2.ice connection cannot be established and server reports play_finished event
-          //  check that publish may start again
-          if (iceConnected) {
-            //  webrtc connection was successful and try to play again with webrtc
-            setTimeout(function() {
-              this.streamInformationHandler(obj);
-            }, 3000);
-          }
+          this.isPlaying = false;
+          this.player.trigger('ended');
           break;
         }
         case ANT_CALLBACKS.STREAM_INFORMATION: {
@@ -137,13 +152,10 @@ class WebRTCHandler {
         }
       },
       callbackError: (error) => {
-        if (error.name === ANT_ERROR_CALLBACKS.HIGH_RESOURCE_USAGE) {
-          // disconnect when server reports high resource usage
-          // it will fire the "closed" callback and and it'll reconnect again.
-          // this is important when it's auto-scaling in the backend
-          this.webRTCAdaptor.closeWebSocket();
-        }
 
+        if (this.disposed) {
+          return;
+        }
         // some of the possible errors, NotFoundError, SecurityError,PermissionDeniedError
         const ModalDialog = videojs.getComponent('ModalDialog');
 
@@ -164,10 +176,11 @@ class WebRTCHandler {
       }
     });
   }
+
   /**
    * after websocket success connection.
    */
-  initializedHandler() {
+  play() {
     this.webRTCAdaptor.play(
       this.source.streamName,
       this.source.token,
@@ -269,6 +282,7 @@ class WebRTCHandler {
   }
 
   dispose() {
+    this.disposed = true;
     if (this.webRTCAdaptor) {
       this.webRTCAdaptor.stop(this.source.streamName);
       this.webRTCAdaptor.closeWebSocket();
@@ -280,6 +294,7 @@ class WebRTCHandler {
 const webRTCSourceHandler = {
   name: 'videojs-webrtc-plugin',
   VERSION: '1.1',
+
   canHandleSource(srcObj, options = {}) {
     const localOptions = videojs.mergeOptions(videojs.options, options);
 
@@ -290,12 +305,7 @@ const webRTCSourceHandler = {
   handleSource(source, tech, options = {}) {
     const localOptions = videojs.mergeOptions(videojs.options, options);
 
-    if (tech.webrtc) {
-      tech.webrtc.dispose();
-      tech.webrtc = null;
-    }
-
-    // Register the plugin to source handler tech
+    // setting the src already dispose the component, no need to dispose it again
     tech.webrtc = new WebRTCHandler(source, tech, localOptions);
 
     return tech.webrtc;
@@ -304,8 +314,10 @@ const webRTCSourceHandler = {
   canPlayType(type, options = {}) {
 
     const mediaUrl = options.source;
+    const regex = /\.webrtc.+$/;
+    const isMatch = regex.test(mediaUrl);
 
-    if (mediaUrl.endsWith('.webrtc')) {
+    if (isMatch) {
       return 'maybe';
     }
 
