@@ -83,6 +83,7 @@ class WebRTCHandler {
     this.source = source;
 
     this.source.pcConfig = { iceServers: JSON.parse(source.iceServers) };
+
     // replace the stream name with websocket url
     this.source.mediaServerUrl = source.src.replace(source.src.split('/').at(-1), 'websocket');
     // get the stream name from the url
@@ -91,15 +92,16 @@ class WebRTCHandler {
     this.source.token = this.getUrlParameter('token');
     this.source.subscriberId = this.getUrlParameter('subscriberId');
     this.source.subscriberCode = this.getUrlParameter('subscriberCode');
+    this.source.reconnect = this.source.reconnect === undefined ? true : this.source.reconnect;
 
     this.webRTCAdaptor = new WebRTCAdaptor({
-      /* eslint-disable camelcase */
-      websocket_url: this.source.mediaServerUrl,
-      /* eslint-enable camelcase */
+      websocketURL: this.source.mediaServerUrl,
       mediaConstraints: this.source.mediaConstraints,
       pcConfig: this.source.pcConfig,
       isPlayMode: true,
       sdpConstraints: this.source.sdpConstraints,
+      reconnectIfRequiredFlag: this.source.reconnect,
+
       callback: (info, obj) => {
         if (this.disposed) {
           return;
@@ -184,9 +186,13 @@ class WebRTCHandler {
     this.webRTCAdaptor.play(
       this.source.streamName,
       this.source.token,
+      null,
+      null,
       this.source.subscriberId,
-      this.source.subscriberCode
+      this.source.subscriberCode,
+      null
     );
+
   }
   /**
    * after joined stream handler
