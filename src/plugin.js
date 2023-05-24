@@ -320,7 +320,7 @@ const webRTCSourceHandler = {
   canPlayType(type, options = {}) {
 
     const mediaUrl = options.source;
-    const regex = /\.webrtc.+$/;
+    const regex = /\.webrtc.*$/;
     const isMatch = regex.test(mediaUrl);
 
     if (isMatch) {
