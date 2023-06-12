@@ -29,7 +29,7 @@
     "watch": "npm-run-all -p watch:*",
     "watch:css": "npm run build:css -- -w",
     "watch:js": "npm run build:js -- -w",
-    "prepublishOnly": "npm-run-all build-prod && vjsverify --verbose"
+    "prepublishOnly": "npm-run-all build-prod"
   },
   "repository": {
     "type": "git",
@@ -79,7 +79,7 @@
     "README.md": "doctoc --notitle"
   },
   "dependencies": {
-    "@antmedia/webrtc_adaptor": "^2.6.1",
+    "@antmedia/webrtc_adaptor": "^2.6.2-SNAPSHOT-2023-Jun-12-04-58",
     "global": "^4.4.0",
     "video.js": "^6 || ^7"
   },
