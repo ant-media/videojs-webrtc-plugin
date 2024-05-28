@@ -97,7 +97,7 @@ class WebRTCHandler {
     this.webRTCAdaptor = new WebRTCAdaptor({
       websocketURL: this.source.mediaServerUrl,
       mediaConstraints: this.source.mediaConstraints,
-      pcConfig: this.source.pcConfig,
+      peerconnection_config: this.source.pcConfig,
       isPlayMode: true,
       sdpConstraints: this.source.sdpConstraints,
       reconnectIfRequiredFlag: this.source.reconnect,
