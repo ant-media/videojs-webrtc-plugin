@@ -82,7 +82,11 @@ class WebRTCHandler {
     this.options = videojs.mergeOptions(defaults, options);
     this.source = source;
 
-    this.source.pcConfig = { iceServers: JSON.parse(source.iceServers) };
+    if (typeof source.iceServers === 'object') {
+      this.source.pcConfig = { iceServers: source.iceServers };
+    } else if (typeof source.iceServers === 'string') {
+      this.source.pcConfig = { iceServers: JSON.parse(source.iceServers) };
+    }
 
     // replace the stream name with websocket url
     this.source.mediaServerUrl = source.src.replace(source.src.split('/').at(-1), 'websocket');
@@ -94,10 +98,10 @@ class WebRTCHandler {
     this.source.subscriberCode = this.getUrlParameter('subscriberCode');
     this.source.reconnect = this.source.reconnect === undefined ? true : this.source.reconnect;
 
-    this.webRTCAdaptor = new WebRTCAdaptor({
+    const config = {
       websocketURL: this.source.mediaServerUrl,
       mediaConstraints: this.source.mediaConstraints,
-      peerconnection_config: this.source.pcConfig,
+
       isPlayMode: true,
       sdpConstraints: this.source.sdpConstraints,
       reconnectIfRequiredFlag: this.source.reconnect,
@@ -176,7 +180,17 @@ class WebRTCHandler {
         this.player.trigger('webrtc-error', { error });
 
       }
-    });
+    };
+
+    if (this.source.pcConfig) {
+      /* eslint-disable camelcase */
+      const peerconnection_config = {};
+
+      Object.assign(peerconnection_config, this.source.pcConfig);
+
+      Object.assign(config, { peerconnection_config });
+    }
+    this.webRTCAdaptor = new WebRTCAdaptor(config);
   }
 
   /**

@@ -1,6 +1,6 @@
 {
   "name": "@antmedia/videojs-webrtc-plugin",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "streaming via WebRTC with Ant-MediaServer",
   "main": "dist/videojs-webrtc-plugin.cjs.js",
   "module": "dist/videojs-webrtc-plugin.es.js",
@@ -79,7 +79,7 @@
     "README.md": "doctoc --notitle"
   },
   "dependencies": {
-    "@antmedia/webrtc_adaptor": "^2.6.2-SNAPSHOT-2023-Jun-12-04-58",
+    "@antmedia/webrtc_adaptor": "^2.9.0",
     "global": "^4.4.0",
     "video.js": "^6 || ^7"
   },
