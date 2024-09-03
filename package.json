@@ -1,6 +1,6 @@
 {
   "name": "@antmedia/videojs-webrtc-plugin",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "streaming via WebRTC with Ant-MediaServer",
   "main": "dist/videojs-webrtc-plugin.cjs.js",
   "module": "dist/videojs-webrtc-plugin.es.js",
@@ -79,13 +79,13 @@
     "README.md": "doctoc --notitle"
   },
   "dependencies": {
-    "@antmedia/webrtc_adaptor": "^2.9.0",
+    "@antmedia/webrtc_adaptor": "2.9.1-SNAPSHOT-2024-May-17-12-21",
     "global": "^4.4.0",
-    "video.js": "^6 || ^7"
+    "video.js": "^8"
   },
   "devDependencies": {
     "@babel/runtime": "^7.14.0",
-    "@videojs/generator-helpers": "~2.0.2",
+    "@videojs/generator-helpers": "~3.0.0",
     "jsdoc": "~3.6.6",
     "karma": "^6.3.2",
     "postcss": "^8.2.13",
@@ -94,8 +94,8 @@
     "sinon": "^9.1.0",
     "videojs-generate-karma-config": "~8.0.0",
     "videojs-generate-postcss-config": "~3.0.0",
-    "videojs-generate-rollup-config": "~6.2.0",
-    "videojs-generator-verify": "~3.0.3",
+    "videojs-generate-rollup-config": "~7.0.1",
+    "videojs-generator-verify": "~4.0.0",
     "videojs-standard": "^8.0.4"
   }
 }
