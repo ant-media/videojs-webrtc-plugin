@@ -7,7 +7,6 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
 - [Installation](#installation)
 - [Issues](#issues)
 - [Usage](#usage)
@@ -65,7 +64,7 @@ This is the simplest case. Get the script in whatever way you prefer and include
 <script src="//path/to/videojs-webrtc-plugin.min.js"></script>
 
 <div id="video_container">
-    <video id=video-player width=960 height=540 class="video-js vjs-default-skin" controls>
+    <video id=my-video width=960 height=540 class="video-js vjs-default-skin" controls>
         <source
            src="ws://localhost:5080/LiveApp/stream1.webrtc" iceServers = '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
            >
