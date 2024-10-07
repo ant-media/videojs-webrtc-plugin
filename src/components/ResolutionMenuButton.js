@@ -7,7 +7,6 @@ class ResolutionMenuButton extends MenuButton {
 
   constructor(player, options) {
     super(player, options);
-    MenuButton.apply(this, arguments);
   }
 
   createEl() {
@@ -17,11 +16,11 @@ class ResolutionMenuButton extends MenuButton {
   }
 
   buildCSSClass() {
-    return MenuButton.prototype.buildCSSClass.call(this) + ' vjs-icon-cog';
+    return `${super.buildCSSClass()} vjs-icon-cog`;
   }
 
   update() {
-    return MenuButton.prototype.update.call(this);
+    return super.update();
   }
 
   createItems() {

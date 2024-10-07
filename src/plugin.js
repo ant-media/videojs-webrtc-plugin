@@ -313,7 +313,7 @@ class WebRTCHandler {
 
 const webRTCSourceHandler = {
   name: 'videojs-webrtc-plugin',
-  VERSION: '1.1',
+  VERSION: '1.3.1',
 
   canHandleSource(srcObj, options = {}) {
     const localOptions = videojs.mergeOptions(videojs.options, options);
