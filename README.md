@@ -22,8 +22,20 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 ## Installation
 
-```sh
+```bash
 npm install --save @antmedia/videojs-webrtc-plugin
+
+OR
+
+npm install
+```
+
+After installing the above packages, run the below commands to build and run the project
+
+```bash
+npm run build
+
+npm run start
 ```
 
 ## Issues
