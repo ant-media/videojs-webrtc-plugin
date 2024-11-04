@@ -7,6 +7,7 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Issues](#issues)
 - [Usage](#usage)
@@ -20,26 +21,38 @@ Plugin for viewing streams located on the ant-media server. There is also a func
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Quick Start
+
+To quickly install the `videojs-webrtc-plugin` and run it locally on your server, follow the below steps.
+
+- Clone the repository on your local system.
+
+   ```bash
+  git clone https://github.com/ant-media/videojs-webrtc-plugin.git
+   ```
+
+- After cloning the repository, run the below commands to build and run the project locally.
+
+   ```bash
+   npm install
+
+  npm run build
+
+  npm run start
+  ```
+
+After the project runs, it will run on any specific port (for example, port 10000), so you can access it on http://localhost:10000 or http://IP-address:10000 if running on any cloud server.
+
+Once the plugin runs in browser, replace the websocket URL with your server's websocket URL in the WS stream link and load the stream. Check the [**streamUrl**](#streamurl) part for reference.
+
 ## Installation
+
+In order to integrate the plugin into your external project, use the below command to install the package.
 
 ```bash
 npm install --save @antmedia/videojs-webrtc-plugin
-
-OR
-
-npm install
 ```
-
-After installing the above packages, run the below commands to build and run the project
-
-```bash
-npm run build
-
-npm run start
-```
-
-## Issues
-Please create issues at [@ant-media/Ant-Media-Server](https://github.com/ant-media/Ant-Media-Server/issues)
 
 ## Usage
 
@@ -49,24 +62,33 @@ To include videojs-webrtc-plugin on your website or web application, use any of 
 
 #### **streamUrl** 
 Ant-MediaServer stream address format:
+
 ```js
 ws://[ant-address]/[app]/[streamId].webrtc?token=[token(opt)]&subscriberId=[subscriberId(opt)]&subscriberCode=[TOTP-code(opt)]
 ```
-link example:
+
+For example:
+
 ```js
 ws://12.23.322.157:5080/LiveApp/stream1.webrtc
 ```
-parameters:
-- token (optional) - a one-time token generated for the stream (in case the stream is protected by the one-time token protection mechanism
-- subscriberId (optional) - subscriber Id. Required if the stream is protected by a TOTP password
-- subscriberCode (optional) - generated TOTP password. Required if the stream is protected by a TOTP password
+
+**Addtional Parameters:-**
+
+- `token (optional)` - a one-time token generated for the stream (in case the stream is protected by the one-time token protection mechanism
+- `subscriberId (optional)` - subscriber Id. Required if the stream is protected by a TOTP password
+- `subscriberCode (optional)` - generated TOTP password. Required if the stream is protected by a TOTP password
 
 #### **iceServers** 
-Array of Ice-servers (STUN, TURN) in JSON string format to establish a WebRTC connection
-example:
+
+Array of Ice-servers (STUN, TURN) in JSON string format to establish a WebRTC connection.
+
+For example:
+
 ```js
 '[ { "urls": "stun:stun1.l.google.com:19302" } ]'
 ```
+
 ### `<script>` Tag
 
 This is the simplest case. Get the script in whatever way you prefer and include the plugin _after_ you include [video.js][videojs], so that the `videojs` global is available.
@@ -146,5 +168,8 @@ To catch an error, you need to subscribe to the event "ant-error":
 
 MIT. Copyright (c) Ant Media
 
-
 [videojs]: http://videojs.com/
+
+## Issues
+
+In case of any problem, please create issues at [Ant-Media-Server Repository](https://github.com/ant-media/Ant-Media-Server/issues)
