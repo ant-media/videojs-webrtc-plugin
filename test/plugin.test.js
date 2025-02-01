@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import videojs from 'video.js';
 
 import plugin from '../src/plugin.js';
+import { ANT_CALLBACKS } from '../src/const/CALLBACKS.js';
 
 const STATIC_VIDEO_HTML = "<video id='video-player' class='video-js vjs-default-skin vjs-big-play-centered' controls playsinline></video>";
 
@@ -13,6 +14,37 @@ QUnit.test('the environment is sane', function(assert) {
   assert.strictEqual(typeof sinon, 'object', 'sinon exists');
   assert.strictEqual(typeof videojs, 'function', 'videojs exists');
   assert.strictEqual(typeof plugin, 'object', 'plugin is a object');
+});
+QUnit.test('play finished before play started', function(assert) {
+
+  const videoContainer = document.createElement('video_container');
+
+  videoContainer.innerHTML = STATIC_VIDEO_HTML;
+
+  document.getElementById('qunit-fixture').appendChild(videoContainer);
+
+  const iceServer = '[ { "urls": "turn:ovh36.antmedia.io" } ]';
+
+  const webrtcHandler = new plugin.WebRTCHandler(
+    {
+      src: 'ws://localhost:5080/WebRTCAppEE/stream.webrtc',
+      type: 'video/webrtc',
+      withCredentials: true,
+      iceServers: iceServer,
+      reconnect: false
+    },
+    null,
+    {
+      playerId: 'video-player'
+    }
+  );
+
+  assert.ok(webrtcHandler.webRTCAdaptor);
+
+  assert.ok(webrtcHandler.webRTCAdaptor.callback);
+  // this callback triggers an error and this code does not pass
+  // https://github.com/ant-media/Ant-Media-Server/issues/6990
+  webrtcHandler.webRTCAdaptor.callback(ANT_CALLBACKS.PLAY_FINISHED);
 });
 
 QUnit.test('PeerConnection Config', function(assert) {

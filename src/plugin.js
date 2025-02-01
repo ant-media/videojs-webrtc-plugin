@@ -222,7 +222,11 @@ class WebRTCHandler {
   leaveStreamHandler() {
     // reset stream resolutions in dropdown
     this.player.resolutions = [];
-    this.player.controlBar.getChild('ResolutionMenuButton').update();
+    // eslint-disable-next-line newline-after-var
+    const resolutionButton = this.player.controlBar.getChild('ResolutionMenuButton');
+    if (resolutionButton) {
+      resolutionButton.update();
+    }
   }
   /**
    * stream information handler.
