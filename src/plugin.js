@@ -124,6 +124,7 @@ class WebRTCHandler {
           this.joinStreamHandler(obj);
           this.isPlaying = true;
           this.player.trigger('play');
+          this.webRTCAdaptor.enableStats(obj.streamId, 1000);
           break;
         }
         case ANT_CALLBACKS.PLAY_FINISHED: {
@@ -145,6 +146,10 @@ class WebRTCHandler {
           break;
         }
         case ANT_CALLBACKS.DATACHANNEL_NOT_OPEN: {
+          break;
+        }
+        case ANT_CALLBACKS.AUTO_RESYNC_TRIGGERED: {
+          this.player.trigger('auto-resync-triggered', { obj });
           break;
         }
         case ANT_CALLBACKS.NEW_TRACK_AVAILABLE: {
