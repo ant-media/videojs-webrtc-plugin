@@ -157,7 +157,7 @@ class WebRTCHandler {
         }
         }
       },
-      callbackError: (error) => {
+      callbackError: (error, message) => {
 
         if (this.disposed) {
           return;
@@ -177,7 +177,7 @@ class WebRTCHandler {
         this.player.addChild(this.errorModal);
         this.errorModal.open();
         this.errorModal.setTimeout(() => this.errorModal.close(), 3000);
-        this.player.trigger('webrtc-error', { error });
+        this.player.trigger('webrtc-error', { error, message });
 
       }
     };
