@@ -149,3 +149,66 @@ QUnit.module('videojs-webrtc-plugin', {
   }
 });
 
+QUnit.test('adds WebRTC audio tracks to Video.js audio track list', function(assert) {
+  const webrtcHandler = Object.create(plugin.WebRTCHandler.prototype);
+  const audioTrackList = [];
+
+  audioTrackList.addTrack = (track) => audioTrackList.push(track);
+  audioTrackList.removeTrack = (track) => audioTrackList.splice(audioTrackList.indexOf(track), 1);
+  audioTrackList.getTrackById = (id) => audioTrackList.find((track) => track.id === id);
+  audioTrackList.addEventListener = sinon.fake();
+  audioTrackList.removeEventListener = sinon.fake();
+
+  webrtcHandler.player = {
+    audioTracks: () => audioTrackList
+  };
+  webrtcHandler.source = {
+    streamName: 'stream123'
+  };
+  webrtcHandler.webRTCAdaptor = {
+    enableTrack: sinon.fake()
+  };
+  webrtcHandler.webRTCAudioTrackIds = [];
+  webrtcHandler.selectedWebRTCAudioTrackId = null;
+  webrtcHandler.audioTrackChangeHandler = null;
+
+  webrtcHandler.audioTrackListHandler({
+    streamId: 'stream123',
+    trackList: ['stream123_eng', 'stream123', 'stream123_tur', 'stream123_eng']
+  });
+
+  assert.deepEqual(
+    webrtcHandler.webRTCAudioTrackIds,
+    ['stream123_eng', 'stream123_tur'],
+    'filters duplicate, primary alias, and fallback track ids'
+  );
+  assert.deepEqual(
+    audioTrackList.map((track) => track.id),
+    ['stream123_eng', 'stream123_tur'],
+    'adds WebRTC audio tracks into Video.js audioTracks()'
+  );
+  assert.strictEqual(audioTrackList[0].label, 'eng', 'uses language suffix as the label');
+  assert.strictEqual(audioTrackList[1].label, 'tur', 'uses language suffix as the label');
+  assert.true(
+    webrtcHandler.webRTCAdaptor.enableTrack.calledWith('stream123', 'stream123_eng', true),
+    'enables the first audio track by default'
+  );
+  assert.true(
+    webrtcHandler.webRTCAdaptor.enableTrack.calledWith('stream123', 'stream123_tur', false),
+    'disables the other audio tracks by default'
+  );
+
+  audioTrackList[0].enabled = false;
+  audioTrackList[1].enabled = true;
+  webrtcHandler.audioTrackChangeHandler();
+
+  assert.strictEqual(webrtcHandler.selectedWebRTCAudioTrackId, 'stream123_tur', 'tracks Video.js audio menu selection');
+  assert.true(
+    webrtcHandler.webRTCAdaptor.enableTrack.calledWith('stream123', 'stream123_eng', false),
+    'disables previously selected WebRTC audio track'
+  );
+  assert.true(
+    webrtcHandler.webRTCAdaptor.enableTrack.calledWith('stream123', 'stream123_tur', true),
+    'enables newly selected WebRTC audio track'
+  );
+});

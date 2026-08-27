@@ -1,5 +1,6 @@
 import videojs from 'video.js';
 import {ANT_CALLBACKS} from './const/CALLBACKS';
+import {COMMANDS} from './const/COMMANDS';
 import ResolutionMenuButton from './components/ResolutionMenuButton';
 import ResolutionMenuItem from './components/ResolutionMenuItem';
 import { WebRTCAdaptor } from '@antmedia/webrtc_adaptor';
@@ -56,6 +57,9 @@ class WebRTCHandler {
 
     this.isPlaying = false;
     this.disposed = false;
+    this.webRTCAudioTrackIds = [];
+    this.selectedWebRTCAudioTrackId = null;
+    this.audioTrackChangeHandler = null;
 
     this.initiateWebRTCAdaptor(source, options);
     this.player.ready(() => {
@@ -140,6 +144,10 @@ class WebRTCHandler {
           this.resolutionChangeHandler(obj);
           break;
         }
+        case COMMANDS.TRACK_LIST: {
+          this.audioTrackListHandler(obj);
+          break;
+        }
         case ANT_CALLBACKS.DATA_RECEIVED: {
           this.player.trigger('webrtc-data-received', { obj });
           break;
@@ -215,6 +223,7 @@ class WebRTCHandler {
    */
   joinStreamHandler(obj) {
     this.webRTCAdaptor.getStreamInfo(this.source.streamName);
+    this.webRTCAdaptor.getTracks(this.source.streamName, this.source.token);
   }
   /**
    * after left stream.
@@ -227,6 +236,7 @@ class WebRTCHandler {
     if (resolutionButton) {
       resolutionButton.update();
     }
+    this.clearWebRTCAudioTracks();
   }
   /**
    * stream information handler.
@@ -284,6 +294,188 @@ class WebRTCHandler {
   }
 
   /**
+   * Adds WebRTC audio tracks to Video.js so the built-in audio selector behaves like HLS playback.
+   *
+   * @param {Object} obj callback artefacts
+   */
+  audioTrackListHandler(obj) {
+    if (!obj || obj.streamId !== this.source.streamName) {
+      return;
+    }
+
+    const audioTrackIds = this.getAudioTrackIds(obj.trackList || []);
+
+    if (audioTrackIds.join('|') === this.webRTCAudioTrackIds.join('|')) {
+      return;
+    }
+
+    const previousAudioTrackIds = this.webRTCAudioTrackIds;
+
+    this.webRTCAudioTrackIds = audioTrackIds;
+    if (!this.webRTCAudioTrackIds.includes(this.selectedWebRTCAudioTrackId)) {
+      this.selectedWebRTCAudioTrackId = this.webRTCAudioTrackIds[0] || null;
+    }
+
+    this.syncAudioTracks(previousAudioTrackIds);
+    if (this.selectedWebRTCAudioTrackId) {
+      this.changeAudioTrack(this.selectedWebRTCAudioTrackId);
+    }
+  }
+
+  /**
+   * Keeps only audio subtrack ids that should be shown to the viewer.
+   *
+   * @param {Array<string>} trackList server track ids
+   * @return {Array<string>} audio track ids
+   */
+  getAudioTrackIds(trackList) {
+    const trackIds = trackList.filter((trackId, index, tracks) => trackId && tracks.indexOf(trackId) === index);
+    const hasLanguageTrackIds = trackIds.some((trackId) => trackId !== this.source.streamName && this.getAudioLanguage(trackId));
+
+    return trackIds.filter((trackId) => {
+      const language = this.getAudioLanguage(trackId);
+
+      return !(hasLanguageTrackIds && trackId === this.source.streamName) && !this.isDefaultAudioTrackId(language || trackId);
+    });
+  }
+
+  /**
+   * Syncs server audio track ids into Video.js audioTracks(), which drives the built-in audio menu.
+   *
+   * @param {Array<string>} previousAudioTrackIds previous server track ids
+   */
+  syncAudioTracks(previousAudioTrackIds) {
+    const audioTracks = this.player.audioTracks && this.player.audioTracks();
+
+    if (!audioTracks || !videojs.AudioTrack) {
+      return;
+    }
+
+    previousAudioTrackIds
+      .filter((trackId) => !this.webRTCAudioTrackIds.includes(trackId))
+      .forEach((trackId) => {
+        const track = audioTracks.getTrackById(trackId);
+
+        if (track) {
+          audioTracks.removeTrack(track);
+        }
+      });
+
+    this.webRTCAudioTrackIds.forEach((trackId, index) => {
+      if (!audioTracks.getTrackById(trackId)) {
+        audioTracks.addTrack(new videojs.AudioTrack({
+          id: trackId,
+          kind: 'main',
+          label: this.getAudioTrackLabel(trackId, index),
+          language: this.getAudioLanguage(trackId),
+          enabled: trackId === this.selectedWebRTCAudioTrackId
+        }));
+      }
+    });
+
+    this.addAudioTrackChangeHandler(audioTracks);
+  }
+
+  /**
+   * Handles selections made from the Video.js built-in audio menu.
+   *
+   * @param {AudioTrackList} audioTracks Video.js audio track list
+   */
+  addAudioTrackChangeHandler(audioTracks) {
+    if (this.audioTrackChangeHandler || !audioTracks.addEventListener) {
+      return;
+    }
+
+    this.audioTrackChangeHandler = () => {
+      for (let i = 0; i < audioTracks.length; i++) {
+        const track = audioTracks[i];
+
+        if (track.enabled && this.webRTCAudioTrackIds.includes(track.id)) {
+          this.changeAudioTrack(track.id);
+          break;
+        }
+      }
+    };
+    audioTracks.addEventListener('change', this.audioTrackChangeHandler);
+  }
+
+  /**
+   * Enables the selected WebRTC audio track and disables the other WebRTC audio tracks.
+   *
+   * @param {string} trackId selected audio track id
+   */
+  changeAudioTrack(trackId) {
+    this.selectedWebRTCAudioTrackId = trackId;
+    this.webRTCAudioTrackIds.forEach((audioTrackId) => {
+      this.webRTCAdaptor.enableTrack(this.source.streamName, audioTrackId, audioTrackId === trackId);
+    });
+  }
+
+  /**
+   * Removes synthetic WebRTC audio tracks from Video.js.
+   */
+  clearWebRTCAudioTracks() {
+    const audioTracks = this.player.audioTracks && this.player.audioTracks();
+
+    if (!audioTracks) {
+      return;
+    }
+
+    if (this.audioTrackChangeHandler && audioTracks.removeEventListener) {
+      audioTracks.removeEventListener('change', this.audioTrackChangeHandler);
+      this.audioTrackChangeHandler = null;
+    }
+
+    this.webRTCAudioTrackIds.forEach((trackId) => {
+      const track = audioTracks.getTrackById(trackId);
+
+      if (track) {
+        audioTracks.removeTrack(track);
+      }
+    });
+    this.webRTCAudioTrackIds = [];
+    this.selectedWebRTCAudioTrackId = null;
+  }
+
+  /**
+   * Extracts language suffix from server-generated WebRTC audio track ids.
+   *
+   * @param {string} trackId server track id
+   * @return {string} language suffix
+   */
+  getAudioLanguage(trackId) {
+    const prefix = `${this.source.streamName}_`;
+
+    return trackId && trackId.startsWith(prefix) ? trackId.substring(prefix.length) : '';
+  }
+
+  /**
+   * Builds the label shown by Video.js audio selector.
+   *
+   * @param {string} trackId server track id
+   * @param {number} index audio track index
+   * @return {string} audio track label
+   */
+  getAudioTrackLabel(trackId, index) {
+    const language = this.getAudioLanguage(trackId);
+
+    if (language && !this.isDefaultAudioTrackId(language)) {
+      return language.replace(/_/g, ' ');
+    }
+    return index === 0 ? 'Audio 1 (default)' : `Audio ${index + 1}`;
+  }
+
+  /**
+   * Returns true for generic server fallback ids that should not be shown to viewers.
+   *
+   * @param {string} trackId server track id
+   * @return {boolean} true if fallback audio id
+   */
+  isDefaultAudioTrackId(trackId) {
+    return /^audio(_\d+)?$/i.test(trackId);
+  }
+
+  /**
    * get url parameter
    *
    * @param {string} param callback event info
@@ -307,6 +499,7 @@ class WebRTCHandler {
 
   dispose() {
     this.disposed = true;
+    this.clearWebRTCAudioTracks();
     if (this.webRTCAdaptor) {
       this.webRTCAdaptor.stop(this.source.streamName);
       this.webRTCAdaptor.closeWebSocket();

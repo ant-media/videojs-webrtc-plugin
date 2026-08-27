@@ -1,0 +1,46 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: setup npm for trusted publishing
+        run: npm install -g npm@11.5.1
+
+      - name: update apt cache
+        run: sudo apt-get update
+
+      - name: install ffmpeg/pulseaudio for firefox
+        run: sudo apt-get install ffmpeg pulseaudio
+
+      - name: start pulseaudio
+        run: pulseaudio -D
+
+      - name: npm install
+        run: npm ci --no-audit
+
+      - name: run npm test
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: npm run test
+
+      - name: publish to npm
+        run: npm publish
